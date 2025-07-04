@@ -9,7 +9,7 @@ class Config:
     def __init__(self):
         # API de FacturaScripts/BEPLY
         self.fs_api_url: Optional[str] = os.getenv('BEPLY_API_URL', 'https://multiagente.beply.es/api/3')
-        self.fs_api_token: Optional[str] = os.getenv('BEPLY_API_KEY')
+        self.fs_api_token: Optional[str] = "Q1dXEP4ftZ6zAw66Zb3x"
         
         # Configuración de logging
         self.log_level: str = os.getenv('LOG_LEVEL', 'INFO')

@@ -10,7 +10,8 @@ from emergency_loop.agent import EmergencyLoopAgent
 from components import (
     ExitConditionChecker,
     ExitLoopSignalTool,  # <-- La nueva herramienta de señalización
-    GlobalWorkflowStatus
+    GlobalWorkflowStatus,
+    ExitCurrentLoopSignalTool
 )
 from google.adk.agents.callback_context import CallbackContext
 from google.adk.tools import BaseTool
@@ -35,6 +36,12 @@ def process_exit_signal_callback(
             tool_context.state['exit_reason'] = tool_response.get("reason", "Sin razón específica")
             logger.warning(f"CALLBACK: Señal de salida detectada en ValidationAgent.")
 
+    elif tool.name == "signal_exit_current_loop" and isinstance(tool_response, dict):
+        if tool_response.get("action") == "EXIT_CURRENT_LOOP":
+            tool_context.state['workflow_status'] = GlobalWorkflowStatus.EXIT_CURRENT_LOOP
+            tool_context.state['exit_reason'] = tool_response.get("reason", "Sin razón específica")
+            logger.info(f"CALLBACK: Señal de salida del bucle actual detectada en ValidationAgent.")
+
 # --- Configuración del Agente de Validación ---
 ValidationAgent = LlmAgent(
     name="ValidationAgent",
@@ -43,7 +50,7 @@ ValidationAgent = LlmAgent(
     instruction=VALIDATION_AGENT_INSTRUCTION,
     
     # 1. Usa la herramienta de SEÑALIZACIÓN
-    tools=[ExitLoopSignalTool],
+    tools=[ExitLoopSignalTool, ExitCurrentLoopSignalTool],
     
     # 2. Usa el CALLBACK para procesar la señal
     after_tool_callback=process_exit_signal_callback,
@@ -61,7 +68,7 @@ ValidationLoopAgent = LoopAgent(
     sub_agents=[
         EmergencyLoopAgent,  # Contiene a LoopGeneral dentro
         ValidationAgent,
-        ExitConditionChecker(name="TopLevelExitChecker")  # Verificador final
+        ExitConditionChecker(name="PreValidationExitChecker"),  # Primero verifica condiciones
     ],
     max_iterations=3
 )

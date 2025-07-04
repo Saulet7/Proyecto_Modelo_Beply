@@ -4,6 +4,7 @@ from google.genai.types import GenerateContentConfig
 from data import MODEL_GEMINI_2_0_FLASH
 from factura.prompt import FACTURA_AGENT_INSTRUCTION
 from factura.tools import FACTURA_AGENT_TOOLS
+from components import ExitConditionChecker, ExitCurrentLoopSignalTool, ExitLoopSignalTool
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +18,8 @@ FacturaAgent = LlmAgent(
         max_output_tokens=2500
     ),
     tools=[
-        *FACTURA_AGENT_TOOLS
+        *FACTURA_AGENT_TOOLS,
+        ExitCurrentLoopSignalTool,
+        ExitLoopSignalTool  # Herramienta para señalizar salida del bucle actual
     ]
 )

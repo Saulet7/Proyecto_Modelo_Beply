@@ -10,13 +10,13 @@ from factura.agent import FacturaAgent
 from cliente.agent import ClienteAgent
 
 # Importa el prompt y las herramientas/componentes compartidos
-from dispatcher.prompt import GENERAL_AGENT_PROMPT
-from components import ExitLoopSignalTool, GlobalWorkflowStatus
+from dispatcher.prompt import GENERAL_AGENT_PROMPT, AGENT_PROMPT
+from components import ExitLoopSignalTool, ExitCurrentLoopSignalTool, GlobalWorkflowStatus
 from data import MODEL_GEMINI_2_0_FLASH
 
 logger = logging.getLogger(__name__)
 
-# Callback para procesar la señal de salida.
+# Callback para procesar las señales de salida (actualizado)
 def process_exit_signal_callback(
     tool: BaseTool,
     args: Dict[str, Any],
@@ -27,22 +27,21 @@ def process_exit_signal_callback(
         if tool_response.get("action") == "EXIT_ALL_LOOPS":
             tool_context.state['workflow_status'] = GlobalWorkflowStatus.EXIT_ALL_LOOPS
             tool_context.state['exit_reason'] = tool_response.get("reason", "Razón no especificada por Dispatcher")
-            logger.warning(f"CALLBACK: DispatcherAgent activó la señal de salida.")
+            logger.warning(f"CALLBACK: DispatcherAgent activó la señal de salida de TODOS los bucles.")
+
 
 # Definición del DispatcherAgent como Orquestador Interno
 DispatcherAgent = LlmAgent(
     name="DispatcherAgent",
     model=MODEL_GEMINI_2_0_FLASH,
     description="Agente orquestador que gestiona el flujo de conversación y llama a sub-agentes especializados.",
-    
     instruction=GENERAL_AGENT_PROMPT,
     
-    # Herramientas: Solo la de señalizar salida.
+    # Herramientas: Ambas señales de salida
     # La herramienta 'transfer_to_agent' se usa para llamar a los sub-agentes listados abajo.
-    tools=[ExitLoopSignalTool],
-    
-    # Callback para manejar la llamada a su propia herramienta de salida.
-    after_tool_callback=process_exit_signal_callback,
+    tools=[
+        ExitLoopSignalTool,          # Salir de todos los bucles
+    ],
     
     # ¡CRÍTICO! Aquí es donde defines que FacturaAgent y ClienteAgent son "hijos"
     # que este agente puede invocar.
@@ -50,6 +49,8 @@ DispatcherAgent = LlmAgent(
         FacturaAgent,
         ClienteAgent,
     ],
+
+    after_tool_callback=process_exit_signal_callback,  # Callback para procesar señales de salida
 
     output_key="dispatcher_output"
 )

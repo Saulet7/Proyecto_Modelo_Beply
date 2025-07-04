@@ -73,8 +73,16 @@ def create_cliente(tool_context, nombre: str, cifnif: str, email: Optional[str] 
     """
     Crea un nuevo cliente. Nombre y CIF/NIF son obligatorios.
     Envía datos como form-data.
+    
+    Args:
+        nombre: Nombre del cliente (obligatorio)
+        cifnif: CIF/NIF del cliente (obligatorio)
+        email: Email del cliente (opcional)
+        telefono1: Teléfono del cliente (opcional)
+        **kwargs: Otros datos del cliente
     """
     logger.info(f"TOOL EXECUTED: create_cliente(nombre='{nombre}', cifnif='{cifnif}', email='{email}', telefono1='{telefono1}', kwargs={kwargs})")
+    
     if not nombre or not cifnif: 
         return {
             "status": "error", 
@@ -88,7 +96,7 @@ def create_cliente(tool_context, nombre: str, cifnif: str, email: Optional[str] 
     if telefono1: form_data['telefono1'] = telefono1
     form_data.update(kwargs)
     
-    # Llamar a make_fs_request, que ahora enviará 'data' como form-data para POST
+    # Llamar a make_fs_request, que enviará 'data' como form-data para POST
     api_result = make_fs_request("POST", "/clientes", data=form_data)
     
     # Añadir message_for_user a la respuesta
@@ -108,7 +116,7 @@ def update_cliente(tool_context, cliente_id: str, **kwargs: Any) -> dict:
     
     Args:
         cliente_id: ID del cliente a actualizar
-        **kwargs: Campos a actualizar (nombre, email, telefono1, etc.)
+        **kwargs: Campos a actualizar (nombre, cifnif, email, telefono1, etc.)
     """
     logger.info(f"TOOL EXECUTED: update_cliente(cliente_id='{cliente_id}', kwargs={kwargs})")
     
@@ -167,35 +175,34 @@ def delete_cliente(tool_context, cliente_id: str) -> dict:
 # Función de diagnóstico para testing
 def test_api_connection(tool_context) -> dict:
     """
-    Prueba la conectividad básica con la API
+    Prueba la conectividad con la API de BEPLY.
     """
     logger.info("TOOL EXECUTED: test_api_connection()")
     
     try:
-        # Intentar listar clientes como prueba de conectividad
-        result = list_clientes(tool_context)
+        # Probar conexión con GET /clientes
+        api_result = make_fs_request("GET", "/clientes")
         
-        if result.get("status") == "success":
-            logger.info("Conectividad API confirmada")
+        if api_result.get("status") == "success":
+            clientes_data = api_result.get("data", [])
             return {
                 "status": "success",
-                "message": "Conectividad API OK",
-                "message_for_user": "La conexión con la API está funcionando correctamente."
+                "message": "Conectividad API exitosa",
+                "message_for_user": f"✅ Conexión API exitosa. Se encontraron {len(clientes_data)} clientes."
             }
         else:
-            logger.error(f"Problema de conectividad: {result}")
             return {
                 "status": "error",
-                "message": f"Problema de conectividad: {result.get('message', 'desconocido')}",
-                "message_for_user": f"Hay un problema con la conexión a la API: {result.get('message', 'desconocido')}"
+                "message": f"Error de conectividad: {api_result.get('message', 'desconocido')}",
+                "message_for_user": f"❌ Error de conexión con la API: {api_result.get('message', 'desconocido')}"
             }
             
     except Exception as e:
-        logger.error(f"Error de conectividad: {e}")
+        logger.error(f"Error al probar conexión API: {e}", exc_info=True)
         return {
             "status": "error",
             "message": str(e),
-            "message_for_user": f"Error de conectividad: {str(e)}"
+            "message_for_user": f"❌ Error al probar la conexión: {str(e)}"
         }
 
 # Lista de herramientas disponibles para el agente
@@ -210,13 +217,7 @@ CLIENTE_AGENT_TOOLS = [
 
 # Configuración de logging para debugging
 def setup_debug_logging():
-    """
-    Configura logging detallado para debugging de la API
-    """
-    # Configurar el logger principal
-    logger.setLevel(logging.DEBUG)
-    
-    # Crear formatter
+    """Configura el logging detallado para debugging"""
     formatter = logging.Formatter(
         '%(asctime)s - %(name)s - %(levelname)s - %(funcName)s:%(lineno)d - %(message)s'
     )
