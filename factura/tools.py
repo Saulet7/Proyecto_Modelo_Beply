@@ -91,6 +91,11 @@ def create_facturacliente(tool_context, codcliente: str, **kwargs: Any) -> dict:
     form_data = {'codcliente': codcliente}
     form_data.update(kwargs)
     
+    # MOSTRAR AL USUARIO QUÉ DATOS SE VAN A ENVIAR
+    import json
+    json_data = json.dumps(form_data, indent=2, ensure_ascii=False)
+    logger.info(f"Datos que se enviarán a la API: {json_data}")
+    
     # Llamar a make_fs_request, que enviará 'data' como form-data para POST
     api_result = make_fs_request("POST", "/facturaclientes", data=form_data)
     
@@ -98,9 +103,9 @@ def create_facturacliente(tool_context, codcliente: str, **kwargs: Any) -> dict:
     if api_result.get("status") == "success" and "message_for_user" not in api_result:
         created_data = api_result.get("data", {})
         numero = created_data.get("numero", "Sin número") if created_data else "Sin número"
-        api_result["message_for_user"] = f"¡Factura creada con éxito! Número: {numero} (Cliente: {codcliente})"
+        api_result["message_for_user"] = f"Datos enviados a la API:\n{json_data}\n\n¡Factura creada con éxito! Número: {numero} (Cliente: {codcliente})"
     elif api_result.get("status") == "error" and "message_for_user" not in api_result:
-        api_result["message_for_user"] = f"No pude crear la factura para el cliente '{codcliente}'. Error: {api_result.get('message', 'desconocido')}."
+        api_result["message_for_user"] = f"Datos enviados a la API:\n{json_data}\n\nNo pude crear la factura para el cliente '{codcliente}'. Error: {api_result.get('message', 'desconocido')}."
     
     return api_result
 

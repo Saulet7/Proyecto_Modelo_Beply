@@ -15,7 +15,7 @@ ExitAgent = LlmAgent(
     name="ExitAgent",
     model=MODEL_GEMINI_2_0_FLASH,
     description="Agente encargado de verificar condiciones de salida del bucle general.",
-    global_instruction=EXIT_AGENT_INSTRUCTION,
+    instruction=EXIT_AGENT_INSTRUCTION,
     tools=[ExitLoopSignalTool],  # Herramienta para señalizar salida
     generate_content_config=GenerateContentConfig(
         temperature=0.0,
@@ -29,7 +29,6 @@ ReducedLoop = LoopAgent(
     description="Bucle interno que procesa tareas.",
     sub_agents=[
         DispatcherAgent, # Agente de trabajo principal de este bucle
-        # Usa el nuevo ExitConditionChecker como un sub-agente para manejar la lógica de salida
         ExitConditionChecker(name="LoopExitChecker"), # Le damos un nombre único
     ],
     max_iterations=10, # Sigue manteniendo un límite de iteraciones como fallback
