@@ -16,7 +16,8 @@ ClienteAgent = LlmAgent(
     generate_content_config=GenerateContentConfig(
         temperature=0.3,
         max_output_tokens=2500
-    ),    tools=[
+    ),    
+    tools=[
         *CLIENTE_AGENT_TOOLS,
         ExitLoopSignalTool
     ]

@@ -19,7 +19,6 @@ FacturaAgent = LlmAgent(
     ),
     tools=[
         *FACTURA_AGENT_TOOLS,
-        ExitCurrentLoopSignalTool,
         ExitLoopSignalTool  # Herramienta para señalizar salida del bucle actual
     ]
 )

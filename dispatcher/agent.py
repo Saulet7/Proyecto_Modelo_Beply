@@ -8,7 +8,8 @@ from typing import Dict, Any
 # Importa los agentes "hijos"
 from factura.agent import FacturaAgent
 from cliente.agent import ClienteAgent
-
+from stock.agent import StockAgent
+from producto.agent import ProductoAgent  # Nuevo agente de Producto
 # Importa el prompt y las herramientas/componentes compartidos
 from dispatcher.prompt import GENERAL_AGENT_PROMPT, AGENT_PROMPT
 from components import ExitLoopSignalTool, ExitCurrentLoopSignalTool, GlobalWorkflowStatus
@@ -48,6 +49,8 @@ DispatcherAgent = LlmAgent(
     sub_agents=[
         FacturaAgent,
         ClienteAgent,
+        StockAgent,
+        ProductoAgent  # Nuevo agente añadido
     ],
 
     after_tool_callback=process_exit_signal_callback,  # Callback para procesar señales de salida
