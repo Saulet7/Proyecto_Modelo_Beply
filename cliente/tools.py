@@ -2,6 +2,7 @@ import logging
 import json
 from typing import Optional, Any
 from utils import make_fs_request
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -35,39 +36,94 @@ def list_clientes(tool_context):
             "message_for_user": f"Error al obtener la lista de clientes: {str(e)}"
         }
 
-def get_cliente(tool_context, cliente_id: str):
+def get_cliente(tool_context, cliente_input: str):
     """
-    Obtiene información detallada de un cliente específico.
-    
+    Obtiene información de uno o varios clientes según ID, nombre exacto o parcial.
+
     Args:
-        cliente_id: ID del cliente a consultar
+        cliente_input (str): ID del cliente o parte del nombre a buscar.
     """
-    logger.info(f"TOOL EXECUTED: get_cliente(cliente_id='{cliente_id}')")
-    
+    logger.info(f"TOOL EXECUTED: get_cliente(cliente_input='{cliente_input}')")
+
+    def es_uuid(valor: str) -> bool:
+        return re.fullmatch(
+            r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}", valor
+        ) is not None
+
     try:
-        # Usar make_fs_request para obtener el cliente específico
-        api_result = make_fs_request("GET", f"/clientes/{cliente_id}")
-        
-        if api_result.get("status") == "success":
-            logger.info(f"Información del cliente {cliente_id} obtenida exitosamente")
-            cliente_data = api_result.get("data", {})
-            if "message_for_user" not in api_result:
-                nombre = cliente_data.get("nombre", "Sin nombre") if cliente_data else "Sin nombre"
-                api_result["message_for_user"] = f"Información del cliente '{nombre}' (ID: {cliente_id}) obtenida correctamente."
-            return api_result
+        if es_uuid(cliente_input):
+            # Buscar directamente por ID
+            api_result = make_fs_request("GET", f"/clientes/{cliente_input}")
+            if api_result.get("status") == "success":
+                cliente_data = api_result.get("data", {})
+                if cliente_data:
+                    return {
+                        "status": "success",
+                        "data": {
+                            "codcliente": cliente_data.get("codcliente"),
+                            "nombre": cliente_data.get("nombre"),
+                            "cifnif": cliente_data.get("cifnif"),
+                            "status": "found"
+                        },
+                        "message_for_user": f"Cliente encontrado: '{cliente_data.get('nombre')}' (ID: {cliente_data.get('codcliente')})."
+                    }
+                else:
+                    return {
+                        "status": "error",
+                        "message": "Cliente no encontrado",
+                        "message_for_user": f"No se encontró un cliente con ID '{cliente_input}'."
+                    }
+
+        # Buscar por nombre parcial (listado + filtro)
+        all_result = make_fs_request("GET", "/clientes")
+        if all_result.get("status") != "success":
+            return {
+                "status": "error",
+                "message": "Error al obtener lista de clientes",
+                "message_for_user": "No pude obtener la lista de clientes para buscar coincidencias."
+            }
+
+        clientes = all_result.get("data", [])
+        coincidencias = [
+            {
+                "codcliente": c.get("codcliente"),
+                "nombre": c.get("nombre"),
+                "cifnif": c.get("cifnif"),
+                "status": "found"
+            }
+            for c in clientes
+            if cliente_input.lower() in (c.get("nombre") or "").lower()
+        ]
+
+        if len(coincidencias) == 1:
+            cliente = coincidencias[0]
+            return {
+                "status": "success",
+                "data": cliente,
+                "message_for_user": f"Cliente encontrado: '{cliente['nombre']}' (ID: {cliente['codcliente']})."
+            }
+        elif len(coincidencias) > 1:
+            return {
+                "status": "multiple",
+                "data": coincidencias,
+                "message_for_user": f"Se encontraron {len(coincidencias)} clientes que coinciden con '{cliente_input}'. Por favor, especifica el NIF/CIF o ID si es posible."
+            }
         else:
-            logger.error(f"Error obteniendo cliente {cliente_id}: {api_result}")
-            if "message_for_user" not in api_result:
-                api_result["message_for_user"] = f"No pude encontrar el cliente con ID {cliente_id}. Error: {api_result.get('message', 'desconocido')}."
-            return api_result
-        
+            return {
+                "status": "not_found",
+                "message": "No hay coincidencias",
+                "message_for_user": f"No se encontró ningún cliente que contenga '{cliente_input}' en su nombre."
+            }
+
     except Exception as e:
-        logger.error(f"Error al obtener cliente {cliente_id}: {e}", exc_info=True)
+        logger.error(f"Error al obtener cliente '{cliente_input}': {e}", exc_info=True)
         return {
             "status": "error",
             "message": str(e),
-            "message_for_user": f"Error al obtener información del cliente {cliente_id}: {str(e)}"
+            "message_for_user": f"Ocurrió un error al obtener el cliente '{cliente_input}': {str(e)}"
         }
+
+
 
 def create_cliente(tool_context, nombre: str, cifnif: str, email: Optional[str] = None, telefono1: Optional[str] = None, **kwargs: Any) -> dict:
     """
