@@ -4,7 +4,7 @@ from google.genai.types import GenerateContentConfig
 from data import MODEL_GEMINI_2_0_FLASH
 from producto.prompt import PRODUCTO_AGENT_INSTRUCTION
 from producto.tools import PRODUCTO_AGENT_TOOLS
-from components import ExitConditionChecker, ExitLoopSignalTool
+from components import ExitLoopSignalTool
 
 logger = logging.getLogger(__name__)
 

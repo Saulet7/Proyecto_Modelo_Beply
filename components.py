@@ -8,6 +8,8 @@ from google.adk.agents import BaseAgent
 from google.adk.agents.invocation_context import InvocationContext
 from google.adk.events import Event, EventActions
 from typing import AsyncGenerator
+from google.adk.tools.tool_context import ToolContext
+
 
 logger = logging.getLogger(__name__)
 
@@ -15,50 +17,34 @@ logger = logging.getLogger(__name__)
 class GlobalWorkflowStatus(Enum):
     CONTINUE = "CONTINUE"
     EXIT_ALL_LOOPS = "EXIT_ALL_LOOPS"
-    EXIT_CURRENT_LOOP = "EXIT_CURRENT_LOOP"
 
 # 2. HERRAMIENTA DE "SEÑALIZACIÓN" PARA SALIR DE TODOS LOS BUCLES
-def signal_exit_loop(reason: str) -> dict:
+def signal_exit_loop(tool_context: ToolContext, reason: str = "No reason provided.") -> dict:
     """
-    Genera una señal para salir de TODOS los bucles con una razón específica.
-    Esta herramienta NO modifica el estado, solo devuelve una estructura de datos.
+    Herramienta para salir de TODOS los bucles con una razón específica.
+
+    Esta función no modifica el estado directamente, solo eleva la acción y devuelve una señal.
 
     Args:
-        reason: La razón por la que se debe salir del bucle (proporcionada por el LLM).
-    
+        tool_context: Contexto de ejecución proporcionado por ADK.
+        reason: La razón por la que se debe salir del bucle.
+
     Returns:
-        Un diccionario indicando la intención de salir y el motivo.
+        Un diccionario estructurado indicando la intención de salida y el motivo.
     """
-    logger.info(f"Herramienta 'signal_exit_loop' llamada con razón: {reason}")
-    # Esta es la señal que el callback buscará.
+    logger.info(f"[Tool] signal_exit_loop llamada por '{tool_context.agent_name}' con razón: {reason}")
+
+    tool_context.actions.escalate = True
+
     return {
         "action": "EXIT_ALL_LOOPS",
         "reason": reason
     }
 
-# 3. HERRAMIENTA DE "SEÑALIZACIÓN" PARA SALIR SOLO DEL BUCLE ACTUAL
-def signal_exit_current_loop(reason: str) -> dict:
-    """
-    Genera una señal para salir únicamente del bucle actual (no de todos los bucles).
-    Esta herramienta NO modifica el estado, solo devuelve una estructura de datos.
-
-    Args:
-        reason: La razón por la que se debe salir del bucle actual (proporcionada por el LLM).
-    
-    Returns:
-        Un diccionario indicando la intención de salir del bucle actual y el motivo.
-    """
-    logger.info(f"Herramienta 'signal_exit_current_loop' llamada con razón: {reason}")
-    # Esta es la señal que el callback buscará.
-    return {
-        "action": "EXIT_CURRENT_LOOP",
-        "reason": reason
-    }
 
 # Envolvemos las funciones de señalización en FunctionTool.
 # Como no tienen 'ctx', no hay problemas de parseo.
 ExitLoopSignalTool = FunctionTool(func=signal_exit_loop)
-ExitCurrentLoopSignalTool = FunctionTool(func=signal_exit_current_loop)
 
 class ExitConditionChecker(BaseAgent):
     async def _run_async_impl(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
