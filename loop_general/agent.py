@@ -18,3 +18,5 @@ LoopGeneral = LoopAgent(
     ],
     max_iterations=3
 )
+
+root_agent = LoopGeneral  # Define el agente raíz como el bucle general
