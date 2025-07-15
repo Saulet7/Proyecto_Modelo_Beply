@@ -12,6 +12,7 @@ from stock.agent import StockAgent
 from producto.agent import ProductoAgent
 from proveedor.agent import ProveedorAgent
 from fabricante.agent import FabricanteAgent
+from familia.agent import FamiliaAgent
 # Importa el prompt y las herramientas/componentes compartidos
 from dispatcher.prompt import GENERAL_AGENT_PROMPT, AGENT_PROMPT
 from components import ExitLoopSignalTool, GlobalWorkflowStatus
@@ -85,7 +86,8 @@ DispatcherAgent = LlmAgent(
         StockAgent,
         ProductoAgent,
         ProveedorAgent,
-        FabricanteAgent
+        FabricanteAgent,
+        FamiliaAgent
     ],
 
     after_tool_callback=process_exit_signal_callback,
