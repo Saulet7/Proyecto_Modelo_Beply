@@ -15,6 +15,7 @@ from fabricante.agent import FabricanteAgent
 from familia.agent import FamiliaAgent
 # Importa el prompt y las herramientas/componentes compartidos
 from dispatcher.prompt import GENERAL_AGENT_PROMPT, AGENT_PROMPT
+from dispatcher.tools import get_current_time, exit_processing_loop
 from components import ExitLoopSignalTool, GlobalWorkflowStatus
 from data import MODEL_GEMINI_2_0_FLASH
 
@@ -77,6 +78,7 @@ DispatcherAgent = LlmAgent(
     instruction=GENERAL_AGENT_PROMPT,
 
     tools=[
+        get_current_time,  # Registrar timestamp de solicitudes
         ExitLoopSignalTool, # Salir de todos los bucles
     ],
 
