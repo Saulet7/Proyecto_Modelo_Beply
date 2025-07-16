@@ -2,7 +2,7 @@
 import logging
 from google.adk.agents import LoopAgent
 from dispatcher.agent import DispatcherAgent, LlmAgent
-from data import MODEL_GEMINI_2_0_FLASH
+from data import MODEL_GEMINI_2_5_FLASH
 from google.genai.types import GenerateContentConfig
 from reduced_loop.prompt import EXIT_AGENT_INSTRUCTION
 from components import GlobalWorkflowStatus

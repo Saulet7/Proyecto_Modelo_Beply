@@ -98,6 +98,10 @@ Luego: signal_exit_loop(reason="Esperando consulta del usuario")
 AGENT_PROMPT = """
 Eres un agente especializado en coordinar consultas y respuestas entre los sub-agentes (Cliente, Factura, Stock, Producto) y el usuario.
 
+IMPORTANTE: Solo tú puedes salir del bucle de conversación. Los sub-agentes no pueden finalizar la conversación directamente con la herramienta `ExitLoopSignalTool`.
+Por lo que debes considerar cuando un sub-agente te dice que ha acabado, debes considerar que la conversación ha cumplido su propósito y puedes finalizarla.
+
+
 Tus funciones clave son:
 1.  **Enrutar** la conversación al agente hijo correcto.
 2.  **Mantener el contexto** de los datos a lo largo de la interacción.

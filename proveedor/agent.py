@@ -1,7 +1,7 @@
 import logging
 from google.adk.agents import LlmAgent
 from google.genai.types import GenerateContentConfig
-from data import MODEL_GEMINI_2_0_FLASH
+from data import MODEL_GEMINI_2_5_FLASH
 from proveedor.prompt import PROVEEDOR_AGENT_INSTRUCTION
 from proveedor.tools import PROVEEDOR_AGENT_TOOLS
 from components import ExitLoopSignalTool
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 ProveedorAgent = LlmAgent(
     name="ProveedorAgent",
-    model=MODEL_GEMINI_2_0_FLASH,
+    model=MODEL_GEMINI_2_5_FLASH,
     description="Agente especializado en identificación, análisis y documentación de supuestos en procesos empresariales por parte de los proveedores",
     instruction=PROVEEDOR_AGENT_INSTRUCTION,
     generate_content_config=GenerateContentConfig(

@@ -17,7 +17,7 @@ from familia.agent import FamiliaAgent
 from dispatcher.prompt import GENERAL_AGENT_PROMPT, AGENT_PROMPT
 from dispatcher.tools import get_current_time, exit_processing_loop
 from components import ExitLoopSignalTool, GlobalWorkflowStatus
-from data import MODEL_GEMINI_2_0_FLASH
+from data import MODEL_GEMINI_2_5_PRO
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +73,7 @@ def after_sub_agent_call_callback(
 # Definición del DispatcherAgent como Orquestador Interno
 DispatcherAgent = LlmAgent(
     name="DispatcherAgent",
-    model=MODEL_GEMINI_2_0_FLASH,
+    model=MODEL_GEMINI_2_5_PRO,
     description="Agente orquestador que gestiona el flujo de conversación y llama a sub-agentes especializados.",
     instruction=GENERAL_AGENT_PROMPT,
 
