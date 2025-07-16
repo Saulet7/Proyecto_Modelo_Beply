@@ -67,7 +67,7 @@ Luego: signal_exit_loop(reason="Esperando consulta del usuario")
     * **ClienteAgent**:
         * Si devuelve datos: responde con un mensaje tipo:  
         ```
-        Datos del cliente encontrados: codcliente=3, nombre='Pepe Domingo Castaño', cifnif='393845703Y'.
+        Datos del cliente encontrados: codcliente=cod_cliente, nombre='nombre_cliente', cifnif='cifnif_cliente'.
         ```
         * Si la intención original era facturar: luego `transfer_to_agent(agent_name='FacturaAgent')`
         * Si era solo gestión de cliente: `signal_exit_loop(reason="Cliente encontrado")`
@@ -76,7 +76,7 @@ Luego: signal_exit_loop(reason="Esperando consulta del usuario")
     * **FacturaAgent**:
         * Si devuelve una pregunta (ej. falta importe o fecha): reenvíala tal cual → `signal_exit_loop(reason="Esperando respuesta del usuario")`
         * Si confirma creación: Reenvía → `signal_exit_loop(reason="Tarea completada")`
-        * Si falta codcliente: `transfer_to_agent(agent_name='ClienteAgent')`
+        * Si falta codcliente: `transfer_to_agent(agent_name='ClienteAgent') con la información necesaria del cliente.`
 
     * **StockAgent**:
         * Si pregunta: reenvíala → `signal_exit_loop(reason="Esperando respuesta del usuario")`
