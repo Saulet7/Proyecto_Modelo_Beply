@@ -172,11 +172,90 @@ def delete_facturacliente(tool_context, factura_id: str) -> dict:
     
     return api_result
 
+def get_factura(tool_context, factura_input: str):
+    """
+    Obtiene información de una o varias facturas según ID o código de cliente.
+    """
+    logger.info(f"TOOL EXECUTED: get_factura(factura_input='{factura_input}')")
+
+    def es_numero(valor: str) -> bool:
+        return valor.isdigit()
+
+    try:
+        # Primero intentar buscar por código de cliente (listado + filtro)
+        all_result = make_fs_request("GET", "/facturaclientes")
+        if all_result.get("status") == "success":
+            facturas = all_result.get("data", [])
+            
+            # Buscar por código de cliente
+            coincidencias = [
+                {
+                    "idfactura": f.get("idfactura"),
+                    "numero": f.get("numero"),
+                    "codcliente": f.get("codcliente"),
+                    "fecha": f.get("fecha"),
+                    "total": f.get("total"),
+                    "status": "found"
+                }
+                for f in facturas
+                if str(factura_input) == str(f.get("codcliente"))
+            ]
+            
+            if coincidencias:
+                if len(coincidencias) == 1:
+                    factura = coincidencias[0]
+                    return {
+                        "status": "success",
+                        "data": factura,
+                        "message_for_user": f"Factura encontrada: '{factura['numero']}' (ID: {factura['idfactura']}) - Cliente: {factura['codcliente']}."
+                    }
+                else:
+                    return {
+                        "status": "multiple",
+                        "data": coincidencias,
+                        "message_for_user": f"Se encontraron {len(coincidencias)} facturas para el cliente '{factura_input}'.",
+                    }
+        
+        # Si no se encontró por codcliente y es numérico, buscar por ID de factura
+        if es_numero(factura_input):
+            api_result = make_fs_request("GET", f"/facturaclientes/{factura_input}")
+            if api_result.get("status") == "success":
+                factura_data = api_result.get("data", {})
+                if factura_data:
+                    return {
+                        "status": "success",
+                        "data": {
+                            "idfactura": factura_data.get("idfactura"),
+                            "numero": factura_data.get("numero"),
+                            "codcliente": factura_data.get("codcliente"),
+                            "fecha": factura_data.get("fecha"),
+                            "total": factura_data.get("total"),
+                            "status": "found"
+                        },
+                        "message_for_user": f"Factura encontrada: '{factura_data.get('numero')}' (ID: {factura_data.get('idfactura')}) - Cliente: {factura_data.get('codcliente')}."
+                    }
+        
+        # No se encontró nada
+        return {
+            "status": "not_found",
+            "message": "No hay coincidencias",
+            "message_for_user": f"No se encontró ninguna factura para el cliente '{factura_input}'."
+        }
+
+    except Exception as e:
+        logger.error(f"Error al obtener factura '{factura_input}': {e}", exc_info=True)
+        return {
+            "status": "error",
+            "message": str(e),
+            "message_for_user": f"Ocurrió un error al obtener la factura '{factura_input}': {str(e)}"
+        }
+
 # Lista de herramientas disponibles para el agente
 FACTURA_AGENT_TOOLS = [
     list_facturaclientes,
     get_facturacliente,
     create_facturacliente,
     update_facturacliente,
-    delete_facturacliente
+    delete_facturacliente,
+    get_factura
 ]
