@@ -6,7 +6,8 @@ from google.adk.agents.callback_context import CallbackContext
 from typing import Dict, Any
 
 # Importa los agentes "hijos"
-from factura.agent import FacturaAgent
+from creador_factura.agent import CreadorFacturaAgent
+from linea_factura.agent import LineaFacturaAgent
 from cliente.agent import ClienteAgent
 from stock.agent import StockAgent
 from producto.agent import ProductoAgent
@@ -16,7 +17,7 @@ from familia.agent import FamiliaAgent
 from presupuesto.agent import PresupuestoAgent
 # Importa el prompt y las herramientas/componentes compartidos
 from dispatcher.prompt import GENERAL_AGENT_PROMPT, AGENT_PROMPT
-from dispatcher.tools import get_current_time, exit_processing_loop
+from dispatcher.tools import get_current_time
 from components import ExitLoopSignalTool, GlobalWorkflowStatus
 from data import MODEL_GEMINI_2_5_PRO
 
@@ -58,7 +59,7 @@ def after_sub_agent_call_callback(
             return
 
         # Detección adicional: ¿La respuesta del sub-agente es una pregunta?
-        # Asegúrate de que esta lógica sea coherente con tu prompt y FacturaAgent, etc.
+        # Asegúrate de que esta lógica sea coherente con tu prompt y CreadorFacturaAgent, etc.
         question_patterns = [
             "Necesito", "necesito", "¿Cuál", "cuál", "Por favor proporciona",
             "por favor, proporciona", "por favor envía", "Requiero",
@@ -84,12 +85,14 @@ DispatcherAgent = LlmAgent(
     ],
 
     sub_agents=[
-        FacturaAgent,
+        CreadorFacturaAgent,
         ClienteAgent,
         StockAgent,
         ProductoAgent,
         ProveedorAgent,
         FabricanteAgent,
+        FamiliaAgent,
+        LineaFacturaAgent
         FamiliaAgent,
         PresupuestoAgent
     ],

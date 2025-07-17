@@ -156,11 +156,136 @@ def delete_producto(tool_context, producto_id: str) -> dict:
     
     return api_result
 
+def get_producto(tool_context, producto_input: str):
+    """
+    Obtiene información de uno o varios productos según ID, referencia exacta o descripción parcial.
+
+    Args:
+        producto_input (str): ID del producto, referencia exacta o parte de la descripción a buscar.
+    """
+    logger.info(f"TOOL EXECUTED: get_producto_by_referencia(producto_input='{producto_input}')")
+
+    def es_numero(valor: str) -> bool:
+        """Verifica si el valor es un número (ID de producto)"""
+        return valor.isdigit()
+
+    try:
+        if es_numero(producto_input):
+            # Buscar directamente por ID
+            api_result = make_fs_request("GET", f"/productos/{producto_input}")
+            if api_result.get("status") == "success":
+                producto_data = api_result.get("data", {})
+                if producto_data:
+                    return {
+                        "status": "success",
+                        "data": {
+                            "idproducto": producto_data.get("idproducto"),
+                            "referencia": producto_data.get("referencia"),
+                            "descripcion": producto_data.get("descripcion"),
+                            "precio": producto_data.get("precio"),
+                            "codfamilia": producto_data.get("codfamilia"),
+                            "codfabricante": producto_data.get("codfabricante"),
+                            "status": "found"
+                        },
+                        "message_for_user": f"Producto encontrado: '{producto_data.get('descripcion')}' (Ref: {producto_data.get('referencia')}) - ID: {producto_data.get('idproducto')}."
+                    }
+                else:
+                    return {
+                        "status": "error",
+                        "message": "Producto no encontrado",
+                        "message_for_user": f"No se encontró un producto con ID '{producto_input}'."
+                    }
+
+        # Buscar por referencia exacta o descripción parcial (listado + filtro)
+        all_result = make_fs_request("GET", "/productos")
+        if all_result.get("status") != "success":
+            return {
+                "status": "error",
+                "message": "Error al obtener lista de productos",
+                "message_for_user": "No pude obtener la lista de productos para buscar coincidencias."
+            }
+
+        productos = all_result.get("data", [])
+        
+        # Primero buscar por referencia exacta
+        coincidencias_exactas = [
+            {
+                "idproducto": p.get("idproducto"),
+                "referencia": p.get("referencia"),
+                "descripcion": p.get("descripcion"),
+                "precio": p.get("precio"),
+                "codfamilia": p.get("codfamilia"),
+                "codfabricante": p.get("codfabricante"),
+                "status": "found"
+            }
+            for p in productos
+            if producto_input.upper() == (p.get("referencia") or "").upper()
+        ]
+
+        if coincidencias_exactas:
+            if len(coincidencias_exactas) == 1:
+                producto = coincidencias_exactas[0]
+                return {
+                    "status": "success",
+                    "data": producto,
+                    "message_for_user": f"Producto encontrado por referencia: '{producto['descripcion']}' (Ref: {producto['referencia']}) - ID: {producto['idproducto']}."
+                }
+            else:
+                return {
+                    "status": "multiple",
+                    "data": coincidencias_exactas,
+                    "message_for_user": f"Se encontraron {len(coincidencias_exactas)} productos con referencia '{producto_input}'."
+                }
+
+        # Si no hay coincidencias exactas, buscar por descripción parcial
+        coincidencias_descripcion = [
+            {
+                "idproducto": p.get("idproducto"),
+                "referencia": p.get("referencia"),
+                "descripcion": p.get("descripcion"),
+                "precio": p.get("precio"),
+                "codfamilia": p.get("codfamilia"),
+                "codfabricante": p.get("codfabricante"),
+                "status": "found"
+            }
+            for p in productos
+            if producto_input.lower() in (p.get("descripcion") or "").lower()
+        ]
+
+        if len(coincidencias_descripcion) == 1:
+            producto = coincidencias_descripcion[0]
+            return {
+                "status": "success",
+                "data": producto,
+                "message_for_user": f"Producto encontrado por descripción: '{producto['descripcion']}' (Ref: {producto['referencia']}) - ID: {producto['idproducto']}."
+            }
+        elif len(coincidencias_descripcion) > 1:
+            return {
+                "status": "multiple",
+                "data": coincidencias_descripcion,
+                "message_for_user": f"Se encontraron {len(coincidencias_descripcion)} productos que coinciden con '{producto_input}' en la descripción. Por favor, especifica la referencia exacta si es posible."
+            }
+        else:
+            return {
+                "status": "not_found",
+                "message": "No hay coincidencias",
+                "message_for_user": f"No se encontró ningún producto que contenga '{producto_input}' en su referencia o descripción."
+            }
+
+    except Exception as e:
+        logger.error(f"Error al obtener producto '{producto_input}': {e}", exc_info=True)
+        return {
+            "status": "error",
+            "message": str(e),
+            "message_for_user": f"Ocurrió un error al obtener el producto '{producto_input}': {str(e)}"
+        }
+
 # Lista de herramientas disponibles para el agente
 PRODUCTO_AGENT_TOOLS = [
     list_productos,
     get_producto,
     create_producto,
     update_producto,
-    delete_producto
+    delete_producto,
+    get_producto
 ]
