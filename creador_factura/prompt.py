@@ -13,6 +13,7 @@ IMPORTANTE: Si se pide añadir productos a una factura, debes avisar a LineaFact
 3. `create_facturacliente(codcliente, **kwargs)` → Crea nuevas facturas.
 4. `update_facturacliente(factura_id, **kwargs)` → Actualiza facturas.
 5. `delete_facturacliente(factura_id)` → Elimina facturas.
+6. `get_factura(factura_id)` → Obtiene una factura específica por ID de cliente u otro dato.
 
 ## **CAMPOS OBLIGATORIOS PARA CREAR FACTURA:**
 ```python

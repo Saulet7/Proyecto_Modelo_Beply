@@ -16,7 +16,7 @@ from fabricante.agent import FabricanteAgent
 from familia.agent import FamiliaAgent
 # Importa el prompt y las herramientas/componentes compartidos
 from dispatcher.prompt import GENERAL_AGENT_PROMPT, AGENT_PROMPT
-from dispatcher.tools import get_current_time, exit_processing_loop
+from dispatcher.tools import get_current_time
 from components import ExitLoopSignalTool, GlobalWorkflowStatus
 from data import MODEL_GEMINI_2_5_PRO
 

@@ -8,7 +8,7 @@ from linea_factura.tools import LINEA_FACTURA_AGENT_TOOLS
 logger = logging.getLogger(__name__)
 
 LineaFacturaAgent = LlmAgent(
-    name="CreadorFacturaAgent",
+    name="LineaFacturaAgent",
     model=MODEL_GEMINI_2_5_FLASH,
     description="Agente especializado en gestión, análisis y procesamiento de facturas y documentos financieros",
     instruction=LINEA_FACTURA_AGENT_INSTRUCTION,

@@ -105,12 +105,12 @@ def create_lineafacturacliente(tool_context, **kwargs: Any) -> dict:
         'actualizastock': -1,
         'dtopor': 0,
         'dtopor2': 0,
-        'mostrar_cantidad': True,
-        'mostrar_precio': True,
+        'mostrar_cantidad': 1,        # Cambiar de True a 1
+        'mostrar_precio': 1,          # Cambiar de True a 1
         'orden': 0,
-        'salto_pagina': False,
+        'salto_pagina': 0,            # Cambiar de False a 0
         'servido': 0,
-        'suplido': False
+        'suplido': 0                  # Cambiar de False a 0
     }
     
     # Añadir defaults solo si no están ya en form_data

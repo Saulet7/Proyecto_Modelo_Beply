@@ -26,6 +26,7 @@ EJEMPLOS DE MENSAJES QUE REQUIEREN get_cliente():
 1. `get_cliente(cliente_input)`  
    → Usa esta función si tienes un **ID**, **NIF/CIF** o cualquier **nombre exacto o parcial** del cliente.  
    Esta función ya gestiona internamente si el input es un ID o un nombre.
+   Pasa la información del cliente si lo encuentras como codcliente, nombre y cifnif.
 
 2. `list_clientes()`  
    → Usa esto **solo si no tienes ningún input claro**, o para resolver ambigüedades. Luego filtra los resultados internamente por nombre o NIF/CIF.
@@ -92,4 +93,17 @@ Nunca muestres información sensible. Solo puedes devolver:
    ```
 
 Este comportamiento es obligatorio para garantizar la consistencia del flujo.
+
+## **REGLAS DE TRANSFERENCIA:**
+
+1. **NUNCA transfieras a CreadorFacturaAgent** directamente
+2. **SIEMPRE devuelve la información al DispatcherAgent** con un mensaje claro
+3. **Si la consulta es sobre facturas existentes**, indica que DispatcherAgent debe usar CreadorFacturaAgent para consultas de facturas
+
+**Ejemplo correcto:**
+```
+Cliente encontrado: nombre_cliente (codcliente=codigo_cliente, cifnif=cifnif_cliente).
+Para consultar las facturas de este cliente, DispatcherAgent debe usar CreadorFacturaAgent u otro, dependiendo de la consulta.
+```
+
 """

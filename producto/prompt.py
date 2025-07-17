@@ -13,6 +13,7 @@ Si has acabado avisa a DispatcherAgent de que has terminado con un mensaje.
 - `create_producto(**kwargs)`
 - `update_producto(producto_id, **kwargs)`
 - `delete_producto(producto_id)`
+- `get_producto(referencia)`
 
 ---
 

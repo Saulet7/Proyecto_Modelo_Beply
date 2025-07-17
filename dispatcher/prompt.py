@@ -43,7 +43,8 @@ Luego: signal_exit_loop(reason="Esperando consulta del usuario")
 
 7.  **ENRUTAMIENTO DIRECTO**:
     * Consulta sobre **clientes**: `transfer_to_agent(agent_name='ClienteAgent')`
-    * Consulta sobre **facturas** (crear factura general): `transfer_to_agent(agent_name='FacturaAgent')`
+    * Creación sobre **facturas** (crear factura general): `transfer_to_agent(agent_name='FacturaAgent')`
+    * Agregación de **líneas de factura**: `transfer_to_agent(agent_name='LineaFacturaAgent')`
     * Consulta sobre **líneas de factura** (agregar productos): `transfer_to_agent(agent_name='LineaFacturaAgent')`
     * Consulta sobre **stock**: `transfer_to_agent(agent_name='StockAgent')`
     * Consulta sobre **productos**: `transfer_to_agent(agent_name='ProductoAgent')`
@@ -110,7 +111,10 @@ Luego: signal_exit_loop(reason="Esperando consulta del usuario")
         * Si era solo gestión de cliente: `signal_exit_loop(reason="Cliente encontrado")`
         * Si pregunta algo: reenvíala y `signal_exit_loop(...)`
 
-    * **FacturaAgent**:
+    * **CreadorFacturaAgent**:
+
+        * Si te dicen de añadir líneas de factura, se encarga LineaFacturaAgent.
+
         * Si devuelve una pregunta:
             - Reenvíala tal cual.
             - Solo usa signal_exit_loop(reason="Esperando respuesta del usuario") si no estás ya dentro de un flujo activo que depende de una respuesta del usuario.
@@ -123,6 +127,7 @@ Luego: signal_exit_loop(reason="Esperando consulta del usuario")
         * Si falta codcliente: `transfer_to_agent(agent_name='ClienteAgent')`
 
     * **LineaFacturaAgent**:
+        * Llámalo y dile que cree líneas cuando se cree una factura.
         * Si necesita producto: `transfer_to_agent(agent_name='ProductoAgent')` con la información del producto
         * Si confirma creación de línea: Pregunta por más líneas:
           ```
