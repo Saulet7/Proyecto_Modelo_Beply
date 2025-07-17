@@ -79,7 +79,7 @@ Nunca muestres información sensible. Solo puedes devolver:
 
 2. ❌ **NUNCA IGNORES UN POSIBLE NOMBRE EN EL MENSAJE**. Siempre intenta `get_cliente(nombre)`
 
-3. ❌ **NO TRANSFIERAS** a FacturaAgent si el mensaje menciona un nombre de cliente sin intentar primero identificarlo
+3. ❌ **NO TRANSFIERAS** a CreadorFacturaAgent si el mensaje menciona un nombre de cliente sin intentar primero identificarlo
 
 4. ✅ **USA SIEMPRE get_cliente()** cuando identifiques un posible nombre en el mensaje
 
