@@ -4,7 +4,6 @@ from google.genai.types import GenerateContentConfig
 from data import MODEL_GEMINI_2_5_FLASH
 from factura.prompt import FACTURA_AGENT_INSTRUCTION
 from factura.tools import FACTURA_AGENT_TOOLS
-from components import ExitLoopSignalTool
 
 logger = logging.getLogger(__name__)
 

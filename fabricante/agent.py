@@ -4,7 +4,6 @@ from google.genai.types import GenerateContentConfig
 from data import MODEL_GEMINI_2_5_FLASH
 from fabricante.prompt import FABRICANTE_AGENT_INSTRUCTION
 from fabricante.tools import FABRICANTE_AGENT_TOOLS
-from components import ExitLoopSignalTool
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +18,5 @@ FabricanteAgent = LlmAgent(
     ),
     tools=[
         *FABRICANTE_AGENT_TOOLS,
-        ExitLoopSignalTool
     ]
 )

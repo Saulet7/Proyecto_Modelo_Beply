@@ -11,7 +11,6 @@ IMPORTANTE: Para salir debes avisasr a DispatcherAgent de que has terminado si l
 3. `create_facturacliente(codcliente, **kwargs)` → Crea nuevas facturas.
 4. `update_facturacliente(factura_id, **kwargs)` → Actualiza facturas.
 5. `delete_facturacliente(factura_id)` → Elimina facturas.
-6. `ExitLoopSignalTool(reason)` → OBLIGATORIO para pausar la conversación cuando necesites información del usuario.
 
 ## **CAMPOS OBLIGATORIOS PARA CREAR FACTURA:**
 ```python

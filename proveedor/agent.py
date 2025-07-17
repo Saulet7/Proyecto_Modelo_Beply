@@ -4,7 +4,7 @@ from google.genai.types import GenerateContentConfig
 from data import MODEL_GEMINI_2_5_FLASH
 from proveedor.prompt import PROVEEDOR_AGENT_INSTRUCTION
 from proveedor.tools import PROVEEDOR_AGENT_TOOLS
-from components import ExitLoopSignalTool
+
 
 logger = logging.getLogger(__name__)
 
@@ -18,8 +18,7 @@ ProveedorAgent = LlmAgent(
         max_output_tokens=2500
     ),    
     tools=[
-        *PROVEEDOR_AGENT_TOOLS,
-        ExitLoopSignalTool
+        *PROVEEDOR_AGENT_TOOLS
     ]
 )
 

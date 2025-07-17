@@ -18,7 +18,6 @@ ProductoAgent = LlmAgent(
         max_output_tokens=2500
     ),
     tools=[
-        *PRODUCTO_AGENT_TOOLS,
-        ExitLoopSignalTool
+        *PRODUCTO_AGENT_TOOLS
     ]
 )

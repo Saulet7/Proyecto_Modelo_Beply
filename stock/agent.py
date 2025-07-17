@@ -3,7 +3,7 @@ from google.adk.agents import LlmAgent
 from google.genai.types import GenerateContentConfig
 from stock.prompt import STOCK_AGENT_INSTRUCTION
 from stock.tools import STOCK_AGENT_TOOLS
-from components import ExitConditionChecker, ExitLoopSignalTool
+
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,6 @@ StockAgent = LlmAgent(
         max_output_tokens=2500
     ),
     tools=[
-        *STOCK_AGENT_TOOLS,
-        ExitLoopSignalTool
+        *STOCK_AGENT_TOOLS
     ]
 )

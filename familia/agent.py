@@ -4,7 +4,6 @@ from google.genai.types import GenerateContentConfig
 from data import MODEL_GEMINI_2_5_FLASH
 from familia.prompt import FAMILIA_AGENT_INSTRUCTION
 from familia.tools import FAMILIA_AGENT_TOOLS
-from components import ExitLoopSignalTool
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +18,6 @@ FamiliaAgent = LlmAgent(
     ),    
     tools=[
         *FAMILIA_AGENT_TOOLS,
-        ExitLoopSignalTool
     ]
 )
 
