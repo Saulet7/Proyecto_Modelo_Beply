@@ -13,6 +13,7 @@ from producto.agent import ProductoAgent
 from proveedor.agent import ProveedorAgent
 from fabricante.agent import FabricanteAgent
 from familia.agent import FamiliaAgent
+from presupuesto.agent import PresupuestoAgent
 # Importa el prompt y las herramientas/componentes compartidos
 from dispatcher.prompt import GENERAL_AGENT_PROMPT, AGENT_PROMPT
 from dispatcher.tools import get_current_time, exit_processing_loop
@@ -89,7 +90,8 @@ DispatcherAgent = LlmAgent(
         ProductoAgent,
         ProveedorAgent,
         FabricanteAgent,
-        FamiliaAgent
+        FamiliaAgent,
+        PresupuestoAgent
     ],
 
     after_tool_callback=process_exit_signal_callback,
