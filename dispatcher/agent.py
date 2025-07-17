@@ -92,8 +92,7 @@ DispatcherAgent = LlmAgent(
         ProveedorAgent,
         FabricanteAgent,
         FamiliaAgent,
-        LineaFacturaAgent
-        FamiliaAgent,
+        LineaFacturaAgent,
         PresupuestoAgent
     ],
 
