@@ -17,7 +17,7 @@ from familia.agent import FamiliaAgent
 from presupuesto.agent import PresupuestoAgent
 # Importa el prompt y las herramientas/componentes compartidos
 from dispatcher.prompt import GENERAL_AGENT_PROMPT, AGENT_PROMPT
-from dispatcher.tools import get_current_time
+from dispatcher.tools import get_current_time, send_email_to_cliente
 from components import ExitLoopSignalTool, GlobalWorkflowStatus
 from data import MODEL_GEMINI_2_5_PRO
 
@@ -81,6 +81,7 @@ DispatcherAgent = LlmAgent(
 
     tools=[
         get_current_time,  # Registrar timestamp de solicitudes
+        send_email_to_cliente,  # Enviar correos electrónicos a clientes
         ExitLoopSignalTool, # Salir de todos los bucles
     ],
 
