@@ -1,0 +1,143 @@
+import logging
+from typing import Any, Optional
+from utils import make_fs_request
+
+logger = logging.getLogger(__name__)
+
+# ----------- LIST -----------
+
+def list_ejercicios(tool_context):
+    """Lista todos los ejercicios disponibles en el sistema."""
+    logger.info("TOOL EXECUTED: list_ejercicios()")
+    try:
+        api_result = make_fs_request("GET", "/ejercicios")
+        if api_result.get("status") == "success":
+            logger.info("Listado de ejercicios completado exitosamente")
+            data = api_result.get("data", [])
+            api_result.setdefault("message_for_user", f"Encontrados {len(data)} ejercicios.")
+        else:
+            logger.error(f"Error en listado de ejercicios: {api_result}")
+            api_result.setdefault("message_for_user", "No pude obtener la lista de ejercicios.")
+        return api_result
+    except Exception as e:
+        logger.error(f"Error al listar ejercicios: {e}", exc_info=True)
+        return {
+            "status": "error",
+            "message": str(e),
+            "message_for_user": f"Error al obtener la lista de ejercicios: {str(e)}"
+        }
+
+# ----------- GET -----------
+
+def get_ejercicio(tool_context, ejercicio_id: str):
+    """Obtiene un ejercicio específico por su ID."""
+    logger.info(f"TOOL EXECUTED: get_ejercicio(ejercicio_id='{ejercicio_id}')")
+    try:
+        api_result = make_fs_request("GET", f"/ejercicios/{ejercicio_id}")
+        if api_result.get("status") == "success":
+            logger.info("Ejercicio obtenido correctamente")
+            data = api_result.get("data", {})
+            nombre = data.get("nombre", "Sin nombre")
+            api_result.setdefault("message_for_user", f"Ejercicio '{nombre}' (ID: {ejercicio_id}) obtenido correctamente.")
+        else:
+            logger.error(f"Error obteniendo ejercicio: {api_result}")
+            api_result.setdefault("message_for_user", f"No pude obtener el ejercicio con ID {ejercicio_id}.")
+        return api_result
+    except Exception as e:
+        logger.error(f"Error al obtener ejercicio {ejercicio_id}: {e}", exc_info=True)
+        return {
+            "status": "error",
+            "message": str(e),
+            "message_for_user": f"Error al obtener el ejercicio {ejercicio_id}: {str(e)}"
+        }
+
+# ----------- UPSERT -----------
+
+def upsert_ejercicio(tool_context, ejercicio_id: Optional[str] = None, **kwargs: Any) -> dict:
+    """
+    Crea o actualiza un ejercicio contable.
+    Si se proporciona `ejercicio_id`, actualiza. Si no, crea.
+    """
+    logger.info(f"TOOL EXECUTED: upsert_ejercicio(ejercicio_id='{ejercicio_id}', kwargs={kwargs})")
+
+    required_fields = [
+        "estado", "fechafin", "fechainicio", "idempresa", "longsubcuenta", "nombre"
+    ]
+
+    if not ejercicio_id:
+        # Validar campos solo si es creación
+        missing = [f for f in required_fields if f not in kwargs or kwargs[f] in [None, ""]]
+        if missing:
+            return {
+                "status": "error",
+                "message": f"Faltan campos obligatorios: {', '.join(missing)}",
+                "message_for_user": f"Para crear un ejercicio necesito: {', '.join(missing)}"
+            }
+
+    # Defaults en ambos casos (si es necesario)
+    # defaults = {}
+    # for k, v in defaults.items():
+    #     kwargs.setdefault(k, v)
+
+    method = "PUT" if ejercicio_id else "POST"
+    endpoint = f"/ejercicios/{ejercicio_id}" if ejercicio_id else "/ejercicios"
+
+    try:
+        api_result = make_fs_request(method, endpoint, data=kwargs)
+        if api_result.get("status") == "success":
+            logger.info("Ejercicio creado/actualizado correctamente")
+            accion = "actualizado" if ejercicio_id else "creado"
+            nombre = kwargs.get("nombre", "sin nombre")
+            api_result.setdefault("message_for_user", f"Ejercicio '{nombre}' {accion} correctamente.")
+        else:
+            logger.error(f"Error en upsert ejercicio: {api_result}")
+            api_result.setdefault("message_for_user", f"No pude guardar el ejercicio. {api_result.get('message', '')}")
+        return api_result
+    except Exception as e:
+        logger.error(f"Error en upsert ejercicio: {e}", exc_info=True)
+        return {
+            "status": "error",
+            "message": str(e),
+            "message_for_user": f"Error al guardar el ejercicio: {str(e)}"
+        }
+
+# ----------- DELETE -----------
+
+def delete_ejercicio(tool_context, ejercicio_id: str) -> dict:
+    """
+    Elimina un ejercicio del sistema.
+    """
+    logger.info(f"TOOL EXECUTED: delete_ejercicio(ejercicio_id='{ejercicio_id}')")
+
+    if not ejercicio_id:
+        return {
+            "status": "error",
+            "message": "ID de ejercicio obligatorio",
+            "message_for_user": "Necesito el ID del ejercicio para eliminarlo."
+        }
+
+    try:
+        api_result = make_fs_request("DELETE", f"/ejercicios/{ejercicio_id}")
+        if api_result.get("status") == "success":
+            logger.info("Ejercicio eliminado correctamente")
+            api_result.setdefault("message_for_user", f"Ejercicio con ID {ejercicio_id} eliminado correctamente.")
+        else:
+            logger.error(f"Error eliminando ejercicio: {api_result}")
+            api_result.setdefault("message_for_user", f"No pude eliminar el ejercicio {ejercicio_id}.")
+        return api_result
+    except Exception as e:
+        logger.error(f"Error eliminando ejercicio {ejercicio_id}: {e}", exc_info=True)
+        return {
+            "status": "error",
+            "message": str(e),
+            "message_for_user": f"Error al eliminar el ejercicio {ejercicio_id}: {str(e)}"
+        }
+
+# ----------- REGISTRO DE TOOLS -----------
+
+EJERCICIOS_TOOLS = [
+    list_ejercicios,
+    get_ejercicio,
+    upsert_ejercicio,
+    delete_ejercicio
+]
