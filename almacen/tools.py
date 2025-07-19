@@ -373,34 +373,56 @@ def list_products(tool_context):
             "message_for_user": f"Ocurrió un error al listar productos: {str(e)}"
         }
 
-def upsert_product(tool_context, codigo: str, descripcion: str, **kwargs):
-    logger.info(f"TOOL EXECUTED: upsert_product(codigo='{codigo}', descripcion='{descripcion}')")
-    if not codigo or not descripcion:
+def upsert_product(tool_context, referencia: str, **kwargs):
+    logger.info(f"TOOL EXECUTED: upsert_product(referencia='{referencia}', cambios={kwargs})")
+
+    if not referencia:
         return {
             "status": "error",
-            "message": "Código y descripción son obligatorios.",
-            "message_for_user": "Debes indicar el código y la descripción del producto."
+            "message": "La referencia es obligatoria.",
+            "message_for_user": "Debes indicar la referencia del producto que quieres modificar."
         }
-    method = "POST"
-    path = "/productos"
-    if kwargs.get("id"):
-        method = "PUT"
-        path = f"/productos/{kwargs.pop('id')}"
-    data = {"codigo": codigo, "descripcion": descripcion}
-    data.update(kwargs)
+
     try:
-        api_result = make_fs_request(method, path, data=data)
+        # Buscar producto por referencia
+        search_result = make_fs_request("GET", "/productos", params={"referencia": referencia})
+        productos = search_result.get("data", [])
+
+        if not productos:
+            return {
+                "status": "error",
+                "message": f"No se encontró ningún producto con referencia '{referencia}'.",
+                "message_for_user": f"No existe ningún producto con la referencia '{referencia}'."
+            }
+
+        # Producto encontrado
+        producto = productos[0]
+        producto_id = producto["idproducto"]
+
+        # Actualizar solo los campos necesarios
+        producto_actualizado = {**producto, **kwargs}
+
+        # ⚠️ Convertir booleanos a enteros (1 / 0)
+        for clave, valor in producto_actualizado.items():
+            if isinstance(valor, bool):
+                producto_actualizado[clave] = int(valor)
+
+        # Realizar el PUT
+        api_result = make_fs_request("PUT", f"/productos/{producto_id}", data=producto_actualizado)
+
         if api_result.get("status") == "success":
-            api_result.setdefault("message_for_user", f"Producto '{codigo}' guardado correctamente.")
+            api_result.setdefault("message_for_user", f"Producto '{referencia}' actualizado correctamente.")
         else:
-            api_result.setdefault("message_for_user", f"No se pudo guardar el producto '{codigo}'.")
+            api_result.setdefault("message_for_user", f"No se pudo actualizar el producto '{referencia}'.")
+
         return api_result
+
     except Exception as e:
         logger.error(f"Error en upsert_product: {e}", exc_info=True)
         return {
             "status": "error",
             "message": str(e),
-            "message_for_user": f"Ocurrió un error al guardar el producto: {str(e)}"
+            "message_for_user": f"Ocurrió un error al modificar el producto '{referencia}': {str(e)}"
         }
 
 def delete_product(tool_context, product_id: str):
