@@ -23,37 +23,58 @@ def list_warehouses(tool_context):
             "message_for_user": f"Ocurrió un error al listar almacenes: {str(e)}"
         }
 
-from typing import Optional
+def upsert_warehouse(
+    tool_context,
+    codalmacen: str,
+    nombre: str,
+    direccion: str,
+    ciudad: str,
+    provincia: str,
+    codpostal: str,
+    codpais: str,
+    telefono: str,
+    idempresa: int,
+    apartado: str,
+    id: Optional[str] = None
+):
+    logger.info(f"TOOL EXECUTED: upsert_warehouse(codalmacen='{codalmacen}')")
 
-def upsert_warehouse(tool_context, codigo: str, ciudad: str, nombre: Optional[str] = None, direccion: Optional[str] = None, **kwargs):
-    logger.info(f"TOOL EXECUTED: upsert_warehouse(codigo='{codigo}', ciudad='{ciudad}', nombre='{nombre}')")
-    
-    if not codigo or not ciudad:
+    # Validación estricta de campos requeridos
+    required_fields = {
+        "codalmacen": codalmacen,
+        "nombre": nombre,
+        "direccion": direccion,
+        "ciudad": ciudad,
+        "provincia": provincia,
+        "codpostal": codpostal,
+        "codpais": codpais,
+        "telefono": telefono,
+        "idempresa": idempresa,
+        "apartado": apartado,
+    }
+
+    missing_fields = [field for field, value in required_fields.items() if value in [None, ""]]
+    if missing_fields:
         return {
             "status": "error",
-            "message": "Código y ciudad son obligatorios.",
-            "message_for_user": "Debes indicar al menos el código y la ciudad del almacén."
+            "message": f"Faltan los siguientes campos requeridos: {', '.join(missing_fields)}",
+            "message_for_user": "Debes completar todos los campos obligatorios del almacén."
         }
 
+    form_data = required_fields.copy()
     method = "POST"
     path = "/almacenes"
-    if kwargs.get("id"):
-        method = "PUT"
-        path = f"/almacenes/{kwargs.pop('id')}"
 
-    form_data = {"codigo": codigo, "ciudad": ciudad}
-    if nombre:
-        form_data["nombre"] = nombre
-    if direccion:
-        form_data["direccion"] = direccion
-    form_data.update(kwargs)
+    if id:
+        method = "PUT"
+        path = f"/almacenes/{id}"
 
     try:
         api_result = make_fs_request(method, path, data=form_data)
         if api_result.get("status") == "success":
-            api_result.setdefault("message_for_user", f"Almacén '{codigo}' guardado correctamente.")
+            api_result.setdefault("message_for_user", f"Almacén '{codalmacen}' guardado correctamente.")
         else:
-            api_result.setdefault("message_for_user", f"No se pudo guardar el almacén '{codigo}'.")
+            api_result.setdefault("message_for_user", f"No se pudo guardar el almacén '{codalmacen}'.")
         return api_result
     except Exception as e:
         logger.error(f"Error en upsert_warehouse: {e}", exc_info=True)
@@ -62,7 +83,6 @@ def upsert_warehouse(tool_context, codigo: str, ciudad: str, nombre: Optional[st
             "message": str(e),
             "message_for_user": f"Ocurrió un error al guardar el almacén: {str(e)}"
         }
-
 
 def delete_warehouse(tool_context, warehouse_id: str):
     logger.info(f"TOOL EXECUTED: delete_warehouse(warehouse_id='{warehouse_id}')")
