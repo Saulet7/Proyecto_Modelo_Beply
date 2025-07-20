@@ -61,13 +61,28 @@ def upsert_warehouse(
             "message_for_user": "Debes completar todos los campos obligatorios del almacén."
         }
 
-    form_data = required_fields.copy()
+    # Definir método y path por defecto
     method = "POST"
     path = "/almacenes"
 
-    if id:
+    if not id:
+        try:
+            # Buscar si existe un almacén con ese codalmacen
+            search_result = make_fs_request("GET", f"/almacenes?codalmacen={codalmacen}")
+            matches = search_result.get("data", [])
+            if matches:
+                id = matches[0].get("id")
+                method = "PUT"
+                path = f"/almacenes/{id}"
+        except Exception as e:
+            logger.warning(f"No se pudo verificar existencia del almacén '{codalmacen}': {e}")
+
+    else:
         method = "PUT"
         path = f"/almacenes/{id}"
+
+    # Preparar los datos del formulario (después de definir el método)
+    form_data = required_fields.copy()
 
     try:
         api_result = make_fs_request(method, path, data=form_data)
