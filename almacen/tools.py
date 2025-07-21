@@ -4,7 +4,7 @@ from utils import make_fs_request
 
 logger = logging.getLogger(__name__)
 
-# --- ALMACENES ---
+# --- ALMACENES ---> listo
 def list_warehouses(tool_context):
     logger.info("TOOL EXECUTED: list_warehouses()")
     try:
@@ -23,7 +23,7 @@ def list_warehouses(tool_context):
             "message_for_user": f"Ocurrió un error al listar almacenes: {str(e)}"
         }
 
-def upsert_warehouse(
+def create_warehouse(
     tool_context,
     codalmacen: str,
     nombre: str,
@@ -34,12 +34,11 @@ def upsert_warehouse(
     codpais: str,
     telefono: str,
     idempresa: int,
-    apartado: str,
-    id: Optional[str] = None
+    apartado: str
 ):
-    logger.info(f"TOOL EXECUTED: upsert_warehouse(codalmacen='{codalmacen}')")
+    logger.info(f"TOOL EXECUTED: create_warehouse(codalmacen='{codalmacen}')")
 
-    # Validación estricta de campos requeridos
+    # Validación de campos obligatorios
     required_fields = {
         "codalmacen": codalmacen,
         "nombre": nombre,
@@ -61,42 +60,80 @@ def upsert_warehouse(
             "message_for_user": "Debes completar todos los campos obligatorios del almacén."
         }
 
-    # Definir método y path por defecto
-    method = "POST"
-    path = "/almacenes"
-
-    if not id:
-        try:
-            # Buscar si existe un almacén con ese codalmacen
-            search_result = make_fs_request("GET", f"/almacenes?codalmacen={codalmacen}")
-            matches = search_result.get("data", [])
-            if matches:
-                id = matches[0].get("id")
-                method = "PUT"
-                path = f"/almacenes/{id}"
-        except Exception as e:
-            logger.warning(f"No se pudo verificar existencia del almacén '{codalmacen}': {e}")
-
-    else:
-        method = "PUT"
-        path = f"/almacenes/{id}"
-
-    # Preparar los datos del formulario (después de definir el método)
-    form_data = required_fields.copy()
-
     try:
-        api_result = make_fs_request(method, path, data=form_data)
-        if api_result.get("status") == "success":
-            api_result.setdefault("message_for_user", f"Almacén '{codalmacen}' guardado correctamente.")
+        response = make_fs_request("POST", "/almacenes", data=required_fields)
+        if response.get("status") == "success":
+            response.setdefault("message_for_user", f"Almacén '{codalmacen}' creado correctamente.")
         else:
-            api_result.setdefault("message_for_user", f"No se pudo guardar el almacén '{codalmacen}'.")
-        return api_result
+            response.setdefault("message_for_user", f"No se pudo crear el almacén '{codalmacen}'.")
+        return response
     except Exception as e:
-        logger.error(f"Error en upsert_warehouse: {e}", exc_info=True)
+        logger.error(f"Error al crear almacén: {e}", exc_info=True)
         return {
             "status": "error",
             "message": str(e),
-            "message_for_user": f"Ocurrió un error al guardar el almacén: {str(e)}"
+            "message_for_user": f"Ocurrió un error al crear el almacén: {str(e)}"
+        }
+
+def update_warehouse(
+    tool_context,
+    id: str,
+    codalmacen: Optional[str] = None,
+    nombre: Optional[str] = None,
+    direccion: Optional[str] = None,
+    ciudad: Optional[str] = None,
+    provincia: Optional[str] = None,
+    codpostal: Optional[str] = None,
+    codpais: Optional[str] = None,
+    telefono: Optional[str] = None,
+    idempresa: Optional[int] = None,
+    apartado: Optional[str] = None
+):
+    logger.info(f"TOOL EXECUTED: update_warehouse(id='{id}')")
+
+    if not id:
+        return {
+            "status": "error",
+            "message": "El ID del almacén es obligatorio para actualizar.",
+            "message_for_user": "No se puede actualizar un almacén sin identificarlo (ID requerido)."
+        }
+
+    # Construir el diccionario solo con campos que no sean None
+    posibles_campos = {
+        "codalmacen": codalmacen,
+        "nombre": nombre,
+        "direccion": direccion,
+        "ciudad": ciudad,
+        "provincia": provincia,
+        "codpostal": codpostal,
+        "codpais": codpais,
+        "telefono": telefono,
+        "idempresa": idempresa,
+        "apartado": apartado,
+    }
+
+    form_data = {k: v for k, v in posibles_campos.items() if v is not None}
+
+    if not form_data:
+        return {
+            "status": "error",
+            "message": "No se especificó ningún campo a actualizar.",
+            "message_for_user": "Debes indicar al menos un campo que quieras modificar del almacén."
+        }
+
+    try:
+        response = make_fs_request("PUT", f"/almacenes/{id}", data=form_data)
+        if response.get("status") == "success":
+            response.setdefault("message_for_user", f"Almacén actualizado correctamente.")
+        else:
+            response.setdefault("message_for_user", f"No se pudo actualizar el almacén.")
+        return response
+    except Exception as e:
+        logger.error(f"Error al actualizar almacén: {e}", exc_info=True)
+        return {
+            "status": "error",
+            "message": str(e),
+            "message_for_user": f"Ocurrió un error al actualizar el almacén: {str(e)}"
         }
 
 def delete_warehouse(tool_context, warehouse_id: str):
@@ -122,7 +159,7 @@ def delete_warehouse(tool_context, warehouse_id: str):
             "message_for_user": f"Ocurrió un error al eliminar el almacén: {str(e)}"
         }
 
-# --- ATRIBUTOS DE PRODUCTO ---
+# --- ATRIBUTOS DE PRODUCTO ---> listo
 def list_attributes(tool_context):
     logger.info("TOOL EXECUTED: list_attributes()")
     try:
@@ -141,12 +178,12 @@ def list_attributes(tool_context):
             "message_for_user": f"Ocurrió un error al listar atributos: {str(e)}"
         }
 
-def upsert_attribute(tool_context, nombre: str, tipo: str, **kwargs):
-    logger.info(f"TOOL EXECUTED: upsert_attribute(nombre='{nombre}', tipo='{tipo}')")
-    if not nombre or not tipo:
+def upsert_attribute(tool_context, nombre: str, **kwargs):
+    logger.info(f"TOOL EXECUTED: upsert_attribute(nombre='{nombre}'')")
+    if not nombre:
         return {
             "status": "error",
-            "message": "Nombre y tipo son obligatorios.",
+            "message": "Nombre obligatorios.",
             "message_for_user": "Debes indicar el nombre y tipo del atributo."
         }
     method = "POST"
@@ -154,7 +191,7 @@ def upsert_attribute(tool_context, nombre: str, tipo: str, **kwargs):
     if kwargs.get("id"):
         method = "PUT"
         path = f"/atributos/{kwargs.pop('id')}"
-    data = {"nombre": nombre, "tipo": tipo}
+    data = {"nombre": nombre}
     data.update(kwargs)
     try:
         api_result = make_fs_request(method, path, data=data)
@@ -194,6 +231,7 @@ def delete_attribute(tool_context, attribute_id: str):
             "message_for_user": f"Ocurrió un error al eliminar el atributo: {str(e)}"
         }
 
+# DUDAS DE COMO HACERLO, EJEMPLO DE COMO SERÍA LA TOOL
 def assign_attribute_to_product(tool_context, producto_id: str, atributo_id: str, valor: str):
     logger.info(f"TOOL EXECUTED: assign_attribute_to_product(producto_id='{producto_id}', atributo_id='{atributo_id}', valor='{valor}')")
     if not producto_id or not atributo_id:
@@ -222,7 +260,7 @@ def assign_attribute_to_product(tool_context, producto_id: str, atributo_id: str
             "message_for_user": f"Ocurrió un error al asignar el atributo al producto: {str(e)}"
         }
 
-# --- FABRICANTES ---
+# --- FABRICANTES ---> listo
 def list_manufacturers(tool_context):
     logger.info("TOOL EXECUTED: list_manufacturers()")
     try:
@@ -241,34 +279,64 @@ def list_manufacturers(tool_context):
             "message_for_user": f"Ocurrió un error al listar fabricantes: {str(e)}"
         }
 
-def upsert_manufacturer(tool_context, nombre: str, **kwargs):
-    logger.info(f"TOOL EXECUTED: upsert_manufacturer(nombre='{nombre}')")
+def create_manufacturer(tool_context, nombre: str, **kwargs):
+    logger.info(f"TOOL EXECUTED: create_manufacturer(nombre='{nombre}')")
+    
     if not nombre:
         return {
             "status": "error",
             "message": "El nombre del fabricante es obligatorio.",
             "message_for_user": "Debes indicar el nombre del fabricante."
         }
-    method = "POST"
-    path = "/fabricantes"
-    if kwargs.get("id"):
-        method = "PUT"
-        path = f"/fabricantes/{kwargs.pop('id')}"
+
     data = {"nombre": nombre}
     data.update(kwargs)
+
     try:
-        api_result = make_fs_request(method, path, data=data)
-        if api_result.get("status") == "success":
-            api_result.setdefault("message_for_user", f"Fabricante '{nombre}' guardado correctamente.")
+        response = make_fs_request("POST", "/fabricantes", data=data)
+        if response.get("status") == "success":
+            response.setdefault("message_for_user", f"Fabricante '{nombre}' creado correctamente.")
         else:
-            api_result.setdefault("message_for_user", f"No se pudo guardar el fabricante '{nombre}'.")
-        return api_result
+            response.setdefault("message_for_user", f"No se pudo crear el fabricante '{nombre}'.")
+        return response
     except Exception as e:
-        logger.error(f"Error en upsert_manufacturer: {e}", exc_info=True)
+        logger.error(f"Error en create_manufacturer: {e}", exc_info=True)
         return {
             "status": "error",
             "message": str(e),
-            "message_for_user": f"Ocurrió un error al guardar el fabricante: {str(e)}"
+            "message_for_user": f"Ocurrió un error al crear el fabricante: {str(e)}"
+        }
+
+def update_manufacturer(tool_context, id: str, **kwargs):
+    logger.info(f"TOOL EXECUTED: update_manufacturer(id='{id}')")
+
+    if not id:
+        return {
+            "status": "error",
+            "message": "El ID del fabricante es obligatorio para actualizar.",
+            "message_for_user": "Debes indicar el ID del fabricante a modificar."
+        }
+
+    if not kwargs:
+        return {
+            "status": "error",
+            "message": "No se proporcionaron campos para actualizar.",
+            "message_for_user": "Debes indicar al menos un campo para modificar del fabricante."
+        }
+
+    try:
+        response = make_fs_request("PUT", f"/fabricantes/{id}", data=kwargs)
+        if response.get("status") == "success":
+            response.setdefault("message_for_user", f"Fabricante actualizado correctamente.")
+        else:
+            response.setdefault("message_for_user", f"No se pudo actualizar el fabricante.")
+        return response
+    except Exception as e:
+        logger.error(f"Error en update_manufacturer: {e}", exc_info=True)
+        return {
+            "status": "error",
+            "message": str(e),
+            "message_for_user": f"Ocurrió un error al actualizar el fabricante: {str(e)}"
         }
 
 def delete_manufacturer(tool_context, manufacturer_id: str):
@@ -295,7 +363,7 @@ def delete_manufacturer(tool_context, manufacturer_id: str):
         }
 
 
-# --- FAMILIAS ---
+# --- FAMILIAS ---> listo
 
 def list_families(tool_context):
     logger.info("TOOL EXECUTED: list_families()")
@@ -315,34 +383,64 @@ def list_families(tool_context):
             "message_for_user": f"Ocurrió un error al listar familias: {str(e)}"
         }
 
-def upsert_family(tool_context, codigo: str, descripcion: str, **kwargs):
-    logger.info(f"TOOL EXECUTED: upsert_family(codigo='{codigo}', descripcion='{descripcion}')")
+def create_family(tool_context, codigo: str, descripcion: str, **kwargs):
+    logger.info(f"TOOL EXECUTED: create_family(codigo='{codigo}', descripcion='{descripcion}')")
+
     if not codigo or not descripcion:
         return {
             "status": "error",
             "message": "Código y descripción son obligatorios.",
             "message_for_user": "Debes indicar el código y la descripción de la familia."
         }
-    method = "POST"
-    path = "/familias"
-    if kwargs.get("id"):
-        method = "PUT"
-        path = f"/familias/{kwargs.pop('id')}"
+
     data = {"codigo": codigo, "descripcion": descripcion}
     data.update(kwargs)
+
     try:
-        api_result = make_fs_request(method, path, data=data)
-        if api_result.get("status") == "success":
-            api_result.setdefault("message_for_user", f"Familia '{codigo}' guardada correctamente.")
+        response = make_fs_request("POST", "/familias", data=data)
+        if response.get("status") == "success":
+            response.setdefault("message_for_user", f"Familia '{codigo}' creada correctamente.")
         else:
-            api_result.setdefault("message_for_user", f"No se pudo guardar la familia '{codigo}'.")
-        return api_result
+            response.setdefault("message_for_user", f"No se pudo crear la familia '{codigo}'.")
+        return response
     except Exception as e:
-        logger.error(f"Error en upsert_family: {e}", exc_info=True)
+        logger.error(f"Error en create_family: {e}", exc_info=True)
         return {
             "status": "error",
             "message": str(e),
-            "message_for_user": f"Ocurrió un error al guardar la familia: {str(e)}"
+            "message_for_user": f"Ocurrió un error al crear la familia: {str(e)}"
+        }
+
+def update_family(tool_context, id: str, **kwargs):
+    logger.info(f"TOOL EXECUTED: update_family(id='{id}')")
+
+    if not id:
+        return {
+            "status": "error",
+            "message": "El ID de la familia es obligatorio para actualizar.",
+            "message_for_user": "Debes indicar el ID de la familia que deseas modificar."
+        }
+
+    if not kwargs:
+        return {
+            "status": "error",
+            "message": "No se proporcionaron campos para actualizar.",
+            "message_for_user": "Debes indicar al menos un campo para modificar en la familia."
+        }
+
+    try:
+        response = make_fs_request("PUT", f"/familias/{id}", data=kwargs)
+        if response.get("status") == "success":
+            response.setdefault("message_for_user", f"Familia actualizada correctamente.")
+        else:
+            response.setdefault("message_for_user", f"No se pudo actualizar la familia.")
+        return response
+    except Exception as e:
+        logger.error(f"Error en update_family: {e}", exc_info=True)
+        return {
+            "status": "error",
+            "message": str(e),
+            "message_for_user": f"Ocurrió un error al actualizar la familia: {str(e)}"
         }
 
 def delete_family(tool_context, family_id: str):
@@ -635,6 +733,7 @@ def delete_carrier(tool_context, carrier_id: str):
             "message_for_user": f"Ocurrió un error al eliminar el transportista: {str(e)}"
         }
 
+# --- GENERADOR DE REPOSTES ---
 def generate_sales_report(tool_context, fecha_inicio: str, fecha_fin: str, 
                           codproducto: str = "", codfamilia: str = "", 
                           codtransportista: str = "", formato: str = "csv"):
@@ -691,13 +790,19 @@ ALMACEN_AGENT_TOOLS = [
     delete_attribute,
     assign_attribute_to_product,
     list_warehouses,
-    upsert_warehouse,
+    # upsert_warehouse,
+    update_warehouse, # separacion de upsert: actualizar almacén existente
+    create_warehouse, # separacion de upsert: crear almacén nuevo
     delete_warehouse,
     list_manufacturers,
-    upsert_manufacturer,
+    #upsert_manufacturer,
+    create_manufacturer, # separacion de upsert: actualizar fabricante existente
+    update_manufacturer, # separacion de upsert: crear fabricante nuevo
     delete_manufacturer,
     list_families,
-    upsert_family,
+    # upsert_family,
+    create_family, # separacion de upsert: actualizar family existente
+    update_family, # separacion de upsert: crear family nuevo
     delete_family,
     list_products,
     upsert_product,
