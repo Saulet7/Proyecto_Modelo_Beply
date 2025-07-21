@@ -49,3 +49,5 @@ logger.info(f"ContabilidadAgent creado exitosamente con {len(CONTABILIDAD_TOOLS)
 # Log de herramientas disponibles para debug
 tool_names = [tool.__name__ for tool in CONTABILIDAD_TOOLS]
 logger.info(f"Herramientas disponibles: {', '.join(tool_names)}")
+
+root_agent = ContabilidadAgent  # ¡Esto es lo crucial!

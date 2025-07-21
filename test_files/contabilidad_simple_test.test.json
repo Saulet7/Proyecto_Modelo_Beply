@@ -1,0 +1,94 @@
+{
+  "eval_set_id": "contabilidad_test_set",
+  "name": "Pruebas de ContabilidadAgent",
+  "description": "Conjunto de pruebas para verificar las funcionalidades básicas del ContabilidadAgent",
+  "eval_cases": [
+    {
+      "eval_id": "listar_asientos",
+      "conversation": [
+        {
+          "invocation_id": "test-001",
+          "user_content": {
+            "parts": [
+              {
+                "text": "¿Puedes mostrarme todos los asientos contables que tenemos en el sistema?"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "He consultado los asientos contables disponibles en el sistema."
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "list_asientos",
+                "args": {}
+              }
+            ],
+            "intermediate_responses": []
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "contabilidad_app",
+        "user_id": "test_user",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "crear_asiento",
+      "conversation": [
+        {
+          "invocation_id": "test-002",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Quiero crear un nuevo asiento contable con los siguientes datos: Canal: 1, Código de ejercicio: 2024, Concepto: Compra de material de oficina, Documento: FAC-2024-123, Editable: Sí, Fecha: 15 de julio de 2024, ID de diario: 1, ID de empresa: 1, Número: AS-001, Operación: Compra"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "He creado el asiento contable con los datos proporcionados."
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "upsert_asiento",
+                "args": {
+                  "canal": 1,
+                  "codejercicio": "2024",
+                  "concepto": "Compra de material de oficina",
+                  "documento": "FAC-2024-123",
+                  "editable": true,
+                  "fecha": "2024-07-15",
+                  "iddiario": 1,
+                  "idempresa": 1,
+                  "numero": "AS-001",
+                  "operacion": "Compra"
+                }
+              }
+            ],
+            "intermediate_responses": []
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "contabilidad_app",
+        "user_id": "test_user",
+        "state": {}
+      }
+    }
+  ]
+}
