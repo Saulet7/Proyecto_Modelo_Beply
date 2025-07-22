@@ -714,12 +714,12 @@ def stock_history(tool_context, codproducto: str):
             "message_for_user": f"Ocurrió un error al consultar el historial: {str(e)}"
         }
 
-# --- TRANSPORTISTAS ---
+# --- TRANSPORTISTAS ---> listo
 
-def list_carriers(tool_context):
-    logger.info("TOOL EXECUTED: list_carriers()")
+def list_carriers(tool_context, **filters):
+    logger.info(f"TOOL EXECUTED: list_carriers(filters={filters})")
     try:
-        api_result = make_fs_request("GET", "/agenciatransportes")
+        api_result = make_fs_request("GET", "/agenciatransportes", params=filters)
         if api_result.get("status") == "success":
             data = api_result.get("data", [])
             api_result.setdefault("message_for_user", f"Se encontraron {len(data)} transportistas.")
@@ -734,34 +734,78 @@ def list_carriers(tool_context):
             "message_for_user": f"Ocurrió un error al listar transportistas: {str(e)}"
         }
 
-def upsert_carrier(tool_context, nombre: str, **kwargs):
-    logger.info(f"TOOL EXECUTED: upsert_carrier(nombre='{nombre}')")
-    if not nombre:
+def create_carrier(tool_context, nombre: str, codigo: str, telefono: str, web: str = "", activo: bool = True):
+    logger.info(f"TOOL EXECUTED: create_carrier(nombre='{nombre}', codigo='{codigo}')")
+
+    # Validación de campos obligatorios
+    if not nombre or not codigo or not telefono:
         return {
             "status": "error",
-            "message": "El nombre es obligatorio.",
-            "message_for_user": "Debes indicar el nombre del transportista."
+            "message": "Faltan campos obligatorios: nombre, código o teléfono.",
+            "message_for_user": "Debes indicar al menos el nombre, código y teléfono del transportista."
         }
-    method = "POST"
-    path = "/agenciatransportes"
-    if kwargs.get("id"):
-        method = "PUT"
-        path = f"/agenciatransportes/{kwargs.pop('id')}"
-    data = {"nombre": nombre}
-    data.update(kwargs)
+
+    data = {
+        "nombre": nombre,
+        "codigo": codigo,
+        "telefono": telefono,
+        "web": web,
+        "activo": int(activo)
+    }
+
     try:
-        api_result = make_fs_request(method, path, data=data)
+        api_result = make_fs_request("POST", "/agenciatransportes", data=data)
         if api_result.get("status") == "success":
-            api_result.setdefault("message_for_user", f"Transportista '{nombre}' guardado correctamente.")
+            api_result.setdefault("message_for_user", f"Transportista '{nombre}' creado correctamente.")
         else:
-            api_result.setdefault("message_for_user", f"No se pudo guardar el transportista '{nombre}'.")
+            api_result.setdefault("message_for_user", f"No se pudo crear el transportista '{nombre}'.")
         return api_result
     except Exception as e:
-        logger.error(f"Error en upsert_carrier: {e}", exc_info=True)
+        logger.error(f"Error en create_carrier: {e}", exc_info=True)
         return {
             "status": "error",
             "message": str(e),
-            "message_for_user": f"Ocurrió un error al guardar el transportista: {str(e)}"
+            "message_for_user": f"Ocurrió un error al crear el transportista: {str(e)}"
+        }
+
+def update_carrier(tool_context, id: str, **kwargs):
+    logger.info(f"TOOL EXECUTED: update_carrier(id='{id}', cambios={kwargs})")
+
+    if not id:
+        return {
+            "status": "error",
+            "message": "El ID del transportista es obligatorio.",
+            "message_for_user": "Debes indicar el ID del transportista que deseas modificar."
+        }
+
+    # Filtrar los campos válidos para actualizar
+    campos_validos = ["nombre", "codigo", "web", "telefono", "activo"]
+    data = {k: v for k, v in kwargs.items() if k in campos_validos}
+
+    if not data:
+        return {
+            "status": "error",
+            "message": "No se proporcionaron campos válidos para actualizar.",
+            "message_for_user": "Debes indicar al menos un campo válido para modificar."
+        }
+
+    # Convertir booleanos a enteros si es necesario
+    if "activo" in data and isinstance(data["activo"], bool):
+        data["activo"] = int(data["activo"])
+
+    try:
+        api_result = make_fs_request("PUT", f"/agenciatransportes/{id}", data=data)
+        if api_result.get("status") == "success":
+            api_result.setdefault("message_for_user", f"Transportista actualizado correctamente.")
+        else:
+            api_result.setdefault("message_for_user", f"No se pudo actualizar el transportista con ID '{id}'.")
+        return api_result
+    except Exception as e:
+        logger.error(f"Error en update_carrier: {e}", exc_info=True)
+        return {
+            "status": "error",
+            "message": str(e),
+            "message_for_user": f"Ocurrió un error al actualizar el transportista: {str(e)}"
         }
 
 def delete_carrier(tool_context, carrier_id: str):
@@ -868,7 +912,9 @@ ALMACEN_AGENT_TOOLS = [
     transfer_stock,
     stock_history,
     list_carriers,
-    upsert_carrier,
+    # upsert_carrier,
+    update_carrier, # separacion de upsert: actualizar transportista existente
+    create_carrier, # separacion de upsert: crear transportista nuevo
     delete_carrier,
     generate_sales_report,
 ]
