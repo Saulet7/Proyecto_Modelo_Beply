@@ -466,7 +466,7 @@ def delete_family(tool_context, family_id: str):
             "message_for_user": f"Ocurrió un error al eliminar la familia: {str(e)}"
         }
 
-# --- PRODUCTOS ---
+# --- PRODUCTOS ---> listo
 
 def list_products(tool_context):
     logger.info("TOOL EXECUTED: list_products()")
@@ -486,8 +486,45 @@ def list_products(tool_context):
             "message_for_user": f"Ocurrió un error al listar productos: {str(e)}"
         }
 
-def upsert_product(tool_context, referencia: str, **kwargs):
-    logger.info(f"TOOL EXECUTED: upsert_product(referencia='{referencia}', cambios={kwargs})")
+def create_product(tool_context, referencia: str, descripcion: str, precio: float, **kwargs):
+    logger.info(f"TOOL EXECUTED: create_product(referencia='{referencia}', descripcion='{descripcion}', precio={precio})")
+
+    if not referencia or not descripcion or precio is None:
+        return {
+            "status": "error",
+            "message": "Referencia, descripción y precio son obligatorios.",
+            "message_for_user": "Debes indicar la referencia, descripción y precio del producto."
+        }
+
+    producto = {
+        "referencia": referencia,
+        "descripcion": descripcion,
+        "precio": precio
+    }
+    producto.update(kwargs)
+
+    # ⚠️ Convertir booleanos a enteros (1 / 0)
+    for k, v in producto.items():
+        if isinstance(v, bool):
+            producto[k] = int(v)
+
+    try:
+        response = make_fs_request("POST", "/productos", data=producto)
+        if response.get("status") == "success":
+            response.setdefault("message_for_user", f"Producto '{referencia}' creado correctamente.")
+        else:
+            response.setdefault("message_for_user", f"No se pudo crear el producto '{referencia}'.")
+        return response
+    except Exception as e:
+        logger.error(f"Error en create_product: {e}", exc_info=True)
+        return {
+            "status": "error",
+            "message": str(e),
+            "message_for_user": f"Ocurrió un error al crear el producto: {str(e)}"
+        }
+
+def update_product(tool_context, referencia: str, **kwargs):
+    logger.info(f"TOOL EXECUTED: update_product(referencia='{referencia}', cambios={kwargs})")
 
     if not referencia:
         return {
@@ -497,41 +534,58 @@ def upsert_product(tool_context, referencia: str, **kwargs):
         }
 
     try:
-        # Buscar producto por referencia
+        # Buscar producto exacto por referencia
         search_result = make_fs_request("GET", "/productos", params={"referencia": referencia})
         productos = search_result.get("data", [])
 
-        if not productos:
+        # Filtrar por coincidencia exacta
+        productos_filtrados = [
+            p for p in productos if p.get("referencia", "").strip().lower() == referencia.strip().lower()
+        ]
+
+        if not productos_filtrados:
             return {
                 "status": "error",
-                "message": f"No se encontró ningún producto con referencia '{referencia}'.",
+                "message": f"No se encontró ningún producto con referencia exacta '{referencia}'.",
                 "message_for_user": f"No existe ningún producto con la referencia '{referencia}'."
             }
 
-        # Producto encontrado
-        producto = productos[0]
-        producto_id = producto["idproducto"]
+        if len(productos_filtrados) > 1:
+            logger.warning(f"Varias coincidencias para referencia '{referencia}': usando la primera.")
+        
+        producto = productos_filtrados[0]
+        producto_id = producto.get("idproducto")
 
-        # Actualizar solo los campos necesarios
-        producto_actualizado = {**producto, **kwargs}
+        if not producto_id:
+            return {
+                "status": "error",
+                "message": "No se encontró ID válido para el producto.",
+                "message_for_user": "No se pudo identificar correctamente el producto a modificar."
+            }
 
-        # ⚠️ Convertir booleanos a enteros (1 / 0)
-        for clave, valor in producto_actualizado.items():
-            if isinstance(valor, bool):
-                producto_actualizado[clave] = int(valor)
+        if not kwargs:
+            return {
+                "status": "error",
+                "message": "No se proporcionaron campos para actualizar.",
+                "message_for_user": "Debes indicar al menos un campo que quieras modificar del producto."
+            }
 
-        # Realizar el PUT
-        api_result = make_fs_request("PUT", f"/productos/{producto_id}", data=producto_actualizado)
+        # Convertir booleanos a enteros
+        for k, v in kwargs.items():
+            if isinstance(v, bool):
+                kwargs[k] = int(v)
 
-        if api_result.get("status") == "success":
-            api_result.setdefault("message_for_user", f"Producto '{referencia}' actualizado correctamente.")
+        response = make_fs_request("PUT", f"/productos/{producto_id}", data=kwargs)
+
+        if response.get("status") == "success":
+            response.setdefault("message_for_user", f"Producto '{referencia}' actualizado correctamente.")
         else:
-            api_result.setdefault("message_for_user", f"No se pudo actualizar el producto '{referencia}'.")
+            response.setdefault("message_for_user", f"No se pudo actualizar el producto '{referencia}'.")
 
-        return api_result
+        return response
 
     except Exception as e:
-        logger.error(f"Error en upsert_product: {e}", exc_info=True)
+        logger.error(f"Error en update_product: {e}", exc_info=True)
         return {
             "status": "error",
             "message": str(e),
@@ -805,7 +859,9 @@ ALMACEN_AGENT_TOOLS = [
     update_family, # separacion de upsert: crear family nuevo
     delete_family,
     list_products,
-    upsert_product,
+    # upsert_product,
+    update_product, # separacion de upsert: actualizar producto existente
+    create_product, # separacion de upsert: crear producto nuevo
     delete_product,
     list_stock,
     adjust_stock,
