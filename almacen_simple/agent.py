@@ -3,8 +3,8 @@ from google.adk.agents import LlmAgent, LoopAgent
 from google.genai.types import GenerateContentConfig
 from components import ExitLoopSignalTool, ExitConditionChecker
 from data import MODEL_GEMINI_2_5_PRO
-from almacen.prompt import ALMACEN_AGENT_INSTRUCTION
-from almacen.tools import ALMACEN_AGENT_TOOLS
+from almacen_simple.prompt import ALMACEN_AGENT_INSTRUCTION
+from almacen_simple.tools import ALMACEN_AGENT_TOOLS
 
 logger = logging.getLogger(__name__)
 
