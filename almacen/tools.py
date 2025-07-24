@@ -160,16 +160,107 @@ def delete_warehouse(tool_context, warehouse_id: str):
         }
 
 # --- ATRIBUTOS DE PRODUCTO ---> listo
-def list_attributes(tool_context):
-    logger.info("TOOL EXECUTED: list_attributes()")
+def list_attributes(tool_context, **filters):
+    logger.info(f"TOOL EXECUTED: list_attributes(filters={filters})")
+
     try:
-        api_result = make_fs_request("GET", "/atributos")
-        if api_result.get("status") == "success":
-            data = api_result.get("data", [])
-            api_result.setdefault("message_for_user", f"Se encontraron {len(data)} atributos.")
+        # Extraer filtros especiales para relaciones atributo-producto
+        valor = filters.pop("valor", None)
+        codproducto = filters.pop("codproducto", None)
+        idproducto = filters.pop("idproducto", None)
+
+        # 1. Obtener lista de atributos (filtrar solo por atributos propios)
+        atributos_result = make_fs_request("GET", "/atributos", params=filters)
+        if atributos_result.get("status") != "success":
+            return {
+                "status": "error",
+                "message": "No se pudo obtener la lista de atributos.",
+                "message_for_user": "No se pudo obtener la lista de atributos."
+            }
+
+        atributos = atributos_result.get("data", [])
+
+        # 2. Obtener relaciones atributo-producto
+        # Si hay filtros de producto, aplicarlos directamente en la consulta si la API lo soporta
+        relaciones_params = {}
+        if codproducto:
+            relaciones_params["codproducto"] = codproducto
+        if idproducto:
+            relaciones_params["idproducto"] = idproducto
+        if valor:
+            relaciones_params["valor"] = valor
+
+        relaciones_result = make_fs_request("GET", "/atributovalores", params=relaciones_params)
+        if relaciones_result.get("status") != "success":
+            return {
+                "status": "error",
+                "message": "No se pudieron obtener las asignaciones de atributos.",
+                "message_for_user": "No se pudieron obtener las asignaciones de atributos a productos."
+            }
+
+        relaciones = relaciones_result.get("data", [])
+
+        # 3. Si no se pudieron aplicar filtros en la API, filtrar manualmente
+        if not relaciones_params:  # Solo si no se aplicaron filtros en la consulta
+            relaciones_filtradas = []
+            for r in relaciones:
+                if (not valor or r.get("valor") == valor) and \
+                   (not codproducto or r.get("codproducto") == codproducto) and \
+                   (not idproducto or r.get("idproducto") == int(idproducto) if idproducto else True):
+                    relaciones_filtradas.append(r)
         else:
-            api_result.setdefault("message_for_user", "No se pudo obtener la lista de atributos.")
-        return api_result
+            relaciones_filtradas = relaciones
+
+        # 4. Crear diccionario de asignaciones por codatributo
+        from collections import defaultdict
+        asignaciones_por_atributo = defaultdict(list)
+        
+        for relacion in relaciones_filtradas:
+            codatributo = relacion.get("codatributo")
+            if codatributo:
+                asignaciones_por_atributo[codatributo].append({
+                    "codproducto": relacion.get("codproducto"),
+                    "idproducto": relacion.get("idproducto"),
+                    "valor": relacion.get("valor")
+                })
+
+        # 5. Enriquecer atributos con sus asignaciones
+        atributos_enriquecidos = []
+        
+        for atributo in atributos:
+            codatributo = atributo.get("codatributo")
+            asignaciones = asignaciones_por_atributo.get(codatributo, [])
+            
+            # Agregar asignaciones al atributo
+            atributo_copia = atributo.copy()
+            atributo_copia["asignaciones"] = asignaciones
+            
+            # Decidir si incluir el atributo basado en los filtros
+            incluir_atributo = True
+            
+            # Si hay filtros de relación (valor, codproducto, idproducto)
+            if valor or codproducto or idproducto:
+                # Solo incluir si tiene asignaciones que coincidan con los filtros
+                incluir_atributo = len(asignaciones) > 0
+            
+            if incluir_atributo:
+                atributos_enriquecidos.append(atributo_copia)
+
+        # 6. Mensaje personalizado según el contexto
+        if codproducto:
+            mensaje_usuario = f"Se encontraron {len(atributos_enriquecidos)} atributos asignados al producto '{codproducto}'."
+        elif valor:
+            mensaje_usuario = f"Se encontraron {len(atributos_enriquecidos)} atributos con valor '{valor}'."
+        else:
+            mensaje_usuario = f"Se encontraron {len(atributos_enriquecidos)} atributos."
+
+        return {
+            "status": "success",
+            "data": atributos_enriquecidos,
+            "message": f"Se procesaron {len(atributos)} atributos y se encontraron {len(atributos_enriquecidos)} que coinciden con los filtros.",
+            "message_for_user": mensaje_usuario
+        }
+
     except Exception as e:
         logger.error(f"Error en list_attributes: {e}", exc_info=True)
         return {
@@ -231,24 +322,28 @@ def delete_attribute(tool_context, attribute_id: str):
             "message_for_user": f"Ocurrió un error al eliminar el atributo: {str(e)}"
         }
 
-# DUDAS DE COMO HACERLO, EJEMPLO DE COMO SERÍA LA TOOL
-def assign_attribute_to_product(tool_context, producto_id: str, atributo_id: str, valor: str):
-    logger.info(f"TOOL EXECUTED: assign_attribute_to_product(producto_id='{producto_id}', atributo_id='{atributo_id}', valor='{valor}')")
-    if not producto_id or not atributo_id:
+def assign_attribute_to_product(tool_context, codproducto: str, codatributo: str, valor: str):
+    logger.info(f"TOOL EXECUTED: assign_attribute_to_product(codproducto='{codproducto}', codatributo='{codatributo}', valor='{valor}')")
+    
+    if not codproducto or not codatributo:
         return {
             "status": "error",
-            "message": "Faltan datos obligatorios (producto_id, atributo_id).",
-            "message_for_user": "Debes indicar el producto y el atributo a asignar."
+            "message": "Faltan datos obligatorios (codproducto, codatributo).",
+            "message_for_user": "Debes indicar el código del producto y el del atributo."
         }
+
     form_data = {
-        "producto_id": producto_id,
-        "atributo_id": atributo_id,
+        "codproducto": str(codproducto),
+        "codatributo": str(codatributo),
         "valor": valor
     }
+
+    logger.debug(f"Enviando form_data a /atributovalor: {form_data}")
+
     try:
-        api_result = make_fs_request("POST", "/atributosproductos", data=form_data)
+        api_result = make_fs_request("POST", "/atributovalores", data=form_data)
         if api_result.get("status") == "success":
-            api_result.setdefault("message_for_user", f"Atributo asignado correctamente al producto.")
+            api_result.setdefault("message_for_user", f"Atributo '{codatributo}' asignado correctamente al producto '{codproducto}'.")
         else:
             api_result.setdefault("message_for_user", "No se pudo asignar el atributo al producto.")
         return api_result
@@ -467,11 +562,10 @@ def delete_family(tool_context, family_id: str):
         }
 
 # --- PRODUCTOS ---> listo
-
-def list_products(tool_context):
-    logger.info("TOOL EXECUTED: list_products()")
+def list_products(tool_context, **filters):
+    logger.info(f"TOOL EXECUTED: list_products(filters={filters})")
     try:
-        api_result = make_fs_request("GET", "/productos")
+        api_result = make_fs_request("GET", "/productos", params=filters)
         if api_result.get("status") == "success":
             data = api_result.get("data", [])
             api_result.setdefault("message_for_user", f"Se encontraron {len(data)} productos.")
@@ -615,18 +709,59 @@ def delete_product(tool_context, product_id: str):
             "message_for_user": f"Ocurrió un error al eliminar el producto: {str(e)}"
         }
 
-# --- STOCK ---
+# --- STOCK ---> listo
 
-def list_stock(tool_context):
-    logger.info("TOOL EXECUTED: list_stock()")
+def list_stock(tool_context, **filters):
+    """
+    Filtros soportados:
+        - codalmacen: str
+        - idproducto: int
+        - idfamilia: int
+        - idfabricante: int
+    """
+    logger.info(f"TOOL EXECUTED: list_stock(filters={filters})")
     try:
-        api_result = make_fs_request("GET", "/stocks")
-        if api_result.get("status") == "success":
-            stock = api_result.get("data", [])
-            api_result.setdefault("message_for_user", f"Se encontraron {len(stock)} registros de stock.")
-        else:
-            api_result.setdefault("message_for_user", "No se pudo obtener el stock.")
-        return api_result
+        # Paso 1: Obtener todo el stock
+        stock_response = make_fs_request("GET", "/stocks")
+        if stock_response.get("status") != "success":
+            stock_response.setdefault("message_for_user", "No se pudo obtener el stock.")
+            return stock_response
+
+        stock_data = stock_response.get("data", [])
+
+        # Si hay filtros por producto, familia o fabricante, necesitamos los productos
+        need_product_data = any(k in filters for k in ["idproducto", "idfamilia", "idfabricante"])
+
+        if need_product_data:
+            product_response = make_fs_request("GET", "/productos")
+            if product_response.get("status") != "success":
+                return {
+                    "status": "error",
+                    "message": "No se pudo obtener la lista de productos para aplicar los filtros.",
+                    "message_for_user": "No se pudo aplicar filtros de familia o fabricante al stock."
+                }
+            productos = product_response.get("data", [])
+
+            # Construimos un índice por idproducto
+            productos_index = {p["idproducto"]: p for p in productos}
+
+            # Filtrado cruzado
+            stock_data = [
+                s for s in stock_data
+                if s.get("idproducto") in productos_index and
+                   (not filters.get("idproducto") or s.get("idproducto") == filters["idproducto"]) and
+                   (not filters.get("idfamilia") or productos_index[s["idproducto"]].get("idfamilia") == filters["idfamilia"]) and
+                   (not filters.get("idfabricante") or productos_index[s["idproducto"]].get("idfabricante") == filters["idfabricante"])
+            ]
+
+        # Filtro directo por almacén (sin necesidad de productos)
+        if "codalmacen" in filters:
+            stock_data = [s for s in stock_data if s.get("codalmacen") == filters["codalmacen"]]
+
+        stock_response["data"] = stock_data
+        stock_response["message_for_user"] = f"Se encontraron {len(stock_data)} registros de stock tras aplicar los filtros."
+        return stock_response
+
     except Exception as e:
         logger.error(f"Error en list_stock: {e}", exc_info=True)
         return {
@@ -635,24 +770,36 @@ def list_stock(tool_context):
             "message_for_user": f"Ocurrió un error al consultar el stock: {str(e)}"
         }
 
-def adjust_stock(tool_context, codproducto: str, cantidad: int, motivo: Optional[str] = None):
-    logger.info(f"TOOL EXECUTED: adjust_stock(codproducto='{codproducto}', cantidad={cantidad})")
-    if not codproducto:
+def adjust_stock(tool_context, referencia: str, idproducto: int, codalmacen: str, cantidad: float, motivo: Optional[str] = None):
+    logger.info(f"TOOL EXECUTED: adjust_stock(idproducto={idproducto}, codalmacen='{codalmacen}', cantidad={cantidad})")
+
+    if not idproducto or not codalmacen:
         return {
             "status": "error",
-            "message": "Código de producto requerido.",
-            "message_for_user": "Debes proporcionar el código del producto a ajustar."
+            "message": "ID de producto y código de almacén son obligatorios.",
+            "message_for_user": "Debes indicar el producto y el almacén donde ajustar el stock."
         }
-    data = {"codproducto": codproducto, "cantidad": cantidad}
+
+    data = {
+        "referencia": referencia,
+        "idproducto": idproducto,
+        "codalmacen": codalmacen,
+        "cantidad": cantidad,
+    }
+
     if motivo:
         data["motivo"] = motivo
+
     try:
         api_result = make_fs_request("POST", "/stocks/adjust", data=data)
+
         if api_result.get("status") == "success":
-            api_result.setdefault("message_for_user", f"Stock de '{codproducto}' ajustado correctamente.")
+            api_result.setdefault("message_for_user", f"Stock del producto (ID {idproducto}) ajustado correctamente en almacén '{codalmacen}'.")
         else:
-            api_result.setdefault("message_for_user", f"No se pudo ajustar el stock de '{codproducto}'.")
+            api_result.setdefault("message_for_user", f"No se pudo ajustar el stock del producto en el almacén '{codalmacen}'.")
+
         return api_result
+
     except Exception as e:
         logger.error(f"Error en adjust_stock: {e}", exc_info=True)
         return {
@@ -831,8 +978,8 @@ def delete_carrier(tool_context, carrier_id: str):
             "message_for_user": f"Ocurrió un error al eliminar el transportista: {str(e)}"
         }
 
-# --- GENERADOR DE REPOSTES ---
-def generate_sales_report(tool_context, fecha_inicio: str, fecha_fin: str, 
+# --- GENERADOR DE REPORTES ---
+def exportInventoryReport(tool_context, fecha_inicio: str, fecha_fin: str, 
                           codproducto: str = "", codfamilia: str = "", 
                           codtransportista: str = "", formato: str = "csv"):
     
@@ -916,7 +1063,7 @@ ALMACEN_AGENT_TOOLS = [
     update_carrier, # separacion de upsert: actualizar transportista existente
     create_carrier, # separacion de upsert: crear transportista nuevo
     delete_carrier,
-    generate_sales_report,
+    exportInventoryReport,
 ]
 
 
