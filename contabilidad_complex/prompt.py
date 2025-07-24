@@ -68,6 +68,7 @@ Si una consulta abarca **múltiples dominios**, determina cuál es el principal 
 **Ejemplo**: "Registra una factura con IVA del 21% y pago a 60 días"
 - Deriva a: AsientosAgent (dominio principal: registro contable)
 - Indica: "Considera aspectos de ImpuestosAgent (IVA 21%) y FormasPagoAgent (plazo 60 días)"
+- IMPORTANTE: Tú darás la salida final, por lo que debes combinar la información de los agentes si es necesario.
 
 ## 🛑 Detección de saludos y cordialidades
 
