@@ -1,7 +1,7 @@
-from contabilidad.prompt import CUENTAS_AGENT_INSTRUCTION
-from contabilidad.cuentas_tools import CUENTAS_TOOLS
+from contabilidad_simple.prompt import CUENTAS_AGENT_INSTRUCTION
+from contabilidad_simple.cuentas_tools import CUENTAS_TOOLS
 from google.adk.agents import LlmAgent
-import general
+import contabilidad_complex.general as general
 
 CuentasAgent = LlmAgent(
     name="CuentasAgent",

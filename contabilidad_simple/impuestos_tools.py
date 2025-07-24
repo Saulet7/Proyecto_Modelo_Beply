@@ -29,26 +29,31 @@ def list_impuestos(tool_context):
 
 # ----------- GET -----------
 
-def get_impuesto(tool_context, impuesto_id: str):
-    """Obtiene un impuesto específico por su ID."""
-    logger.info(f"TOOL EXECUTED: get_impuesto(impuesto_id='{impuesto_id}')")
+def get_impuesto(tool_context, impuesto_input: str):
+    """
+    Obtiene información de uno o varios impuestos según ID, descripción o porcentaje IVA.
+
+    Args:
+        impuesto_input (str): ID del impuesto, descripción o porcentaje IVA a buscar.
+    """
+    logger.info(f"TOOL EXECUTED: get_impuesto(impuesto_input='{impuesto_input}')")
     try:
-        api_result = make_fs_request("GET", f"/impuestos/{impuesto_id}")
+        api_result = make_fs_request("GET", f"/impuestos/{impuesto_input}")
         if api_result.get("status") == "success":
             logger.info("Impuesto obtenido correctamente")
             data = api_result.get("data", {})
             descripcion = data.get("descripcion", "Sin descripción")
-            api_result.setdefault("message_for_user", f"Impuesto '{descripcion}' (ID: {impuesto_id}) obtenido correctamente.")
+            api_result.setdefault("message_for_user", f"Impuesto '{descripcion}' (ID: {impuesto_input}) obtenido correctamente.")
         else:
             logger.error(f"Error obteniendo impuesto: {api_result}")
-            api_result.setdefault("message_for_user", f"No pude obtener el impuesto con ID {impuesto_id}.")
+            api_result.setdefault("message_for_user", f"No pude obtener el impuesto con ID {impuesto_input}.")
         return api_result
     except Exception as e:
-        logger.error(f"Error al obtener impuesto {impuesto_id}: {e}", exc_info=True)
+        logger.error(f"Error al obtener impuesto {impuesto_input}: {e}", exc_info=True)
         return {
             "status": "error",
             "message": str(e),
-            "message_for_user": f"Error al obtener el impuesto {impuesto_id}: {str(e)}"
+            "message_for_user": f"Error al obtener el impuesto {impuesto_input}: {str(e)}"
         }
 
 def upsert_impuesto(tool_context, impuesto_id: Optional[str] = None, **kwargs: Any) -> dict:

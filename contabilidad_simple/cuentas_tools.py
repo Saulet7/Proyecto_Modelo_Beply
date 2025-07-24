@@ -1,6 +1,7 @@
 import logging
 from typing import Any, Optional
 from utils import make_fs_request
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -29,26 +30,82 @@ def list_cuentas(tool_context):
 
 # ----------- GET -----------
 
-def get_cuenta(tool_context, cuenta_id: str):
-    """Obtiene una cuenta específica por su ID."""
-    logger.info(f"TOOL EXECUTED: get_cuenta(cuenta_id='{cuenta_id}')")
+def get_cuenta(tool_context, cuenta_input: str):
+    """
+    Obtiene información de una o varias cuentas según ID, código o descripción.
+
+    Args:
+        cuenta_input (str): ID de la cuenta, código o parte de la descripción a buscar.
+    """
+    logger.info(f"TOOL EXECUTED: get_cuenta(cuenta_input='{cuenta_input}')")
+
+    def es_uuid(valor: str) -> bool:
+        return re.fullmatch(
+            r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}", valor
+        ) is not None
+
     try:
-        api_result = make_fs_request("GET", f"/cuentas/{cuenta_id}")
-        if api_result.get("status") == "success":
-            logger.info("Cuenta obtenida correctamente")
-            data = api_result.get("data", {})
-            descripcion = data.get("descripcion", "Sin descripción")
-            api_result.setdefault("message_for_user", f"Cuenta '{descripcion}' (ID: {cuenta_id}) obtenida correctamente.")
+        if es_uuid(cuenta_input):
+            # Buscar directamente por ID
+            api_result = make_fs_request("GET", f"/cuentas/{cuenta_input}")
+            if api_result.get("status") == "success":
+                cuenta_data = api_result.get("data", {})
+                if cuenta_data:
+                    return {
+                        "status": "success",
+                        "data": cuenta_data,
+                        "message_for_user": f"Cuenta encontrada: '{cuenta_data.get('descripcion')}' (Código: {cuenta_data.get('codcuenta')})."
+                    }
+                else:
+                    return {
+                        "status": "error",
+                        "message": "Cuenta no encontrada",
+                        "message_for_user": f"No se encontró una cuenta con ID '{cuenta_input}'."
+                    }
+
+        # Buscar por código o descripción
+        all_result = make_fs_request("GET", "/cuentas")
+        if all_result.get("status") != "success":
+            return {
+                "status": "error",
+                "message": "Error al obtener lista de cuentas",
+                "message_for_user": "No pude obtener la lista de cuentas para buscar coincidencias."
+            }
+
+        cuentas = all_result.get("data", [])
+        coincidencias = [
+            c for c in cuentas if (
+                cuenta_input.lower() in (c.get("descripcion") or "").lower() or
+                cuenta_input.lower() in (c.get("codcuenta") or "").lower()
+            )
+        ]
+
+        if len(coincidencias) == 1:
+            cuenta = coincidencias[0]
+            return {
+                "status": "success",
+                "data": cuenta,
+                "message_for_user": f"Cuenta encontrada: '{cuenta.get('descripcion')}' (Código: {cuenta.get('codcuenta')})."
+            }
+        elif len(coincidencias) > 1:
+            return {
+                "status": "multiple",
+                "data": coincidencias,
+                "message_for_user": f"Se encontraron {len(coincidencias)} cuentas que coinciden con '{cuenta_input}'. Por favor, especifica el código exacto o ID si es posible."
+            }
         else:
-            logger.error(f"Error obteniendo cuenta: {api_result}")
-            api_result.setdefault("message_for_user", f"No pude obtener la cuenta con ID {cuenta_id}.")
-        return api_result
+            return {
+                "status": "not_found",
+                "message": "No hay coincidencias",
+                "message_for_user": f"No se encontró ninguna cuenta que contenga '{cuenta_input}' en su descripción o código."
+            }
+
     except Exception as e:
-        logger.error(f"Error al obtener cuenta {cuenta_id}: {e}", exc_info=True)
+        logger.error(f"Error al obtener cuenta '{cuenta_input}': {e}", exc_info=True)
         return {
             "status": "error",
             "message": str(e),
-            "message_for_user": f"Error al obtener la cuenta {cuenta_id}: {str(e)}"
+            "message_for_user": f"Ocurrió un error al obtener la cuenta '{cuenta_input}': {str(e)}"
         }
 
 # ----------- UPSERT -----------

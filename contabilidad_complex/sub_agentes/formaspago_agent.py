@@ -1,7 +1,7 @@
-from contabilidad.prompt import FORMASPAGO_AGENT_INSTRUCTION
-from formaspago_tools import FORMASPAGO_TOOLS
+from contabilidad_simple.prompt import FORMASPAGO_AGENT_INSTRUCTION
+from contabilidad_simple.formaspago_tools import FORMASPAGO_TOOLS
 from google.adk.agents import LlmAgent
-import general
+import contabilidad_complex.general as general
 
 
 FormasPagoAgent = LlmAgent(

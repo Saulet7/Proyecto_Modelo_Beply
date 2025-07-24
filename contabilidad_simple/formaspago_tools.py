@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import Any, Optional
 from utils import make_fs_request
 
@@ -29,26 +30,81 @@ def list_formas_pago(tool_context):
 
 # ----------- GET -----------
 
-def get_forma_pago(tool_context, forma_id: str):
-    """Obtiene una forma de pago específica por su ID."""
-    logger.info(f"TOOL EXECUTED: get_forma_pago(forma_id='{forma_id}')")
+def get_forma_pago(tool_context, forma_input: str):
+    """
+    Obtiene información de una o varias formas de pago según ID o descripción.
+
+    Args:
+        forma_input (str): ID de la forma de pago o parte de la descripción a buscar.
+    """
+    logger.info(f"TOOL EXECUTED: get_forma_pago(forma_input='{forma_input}')")
+
+    def es_uuid(valor: str) -> bool:
+        return re.fullmatch(
+            r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}", valor
+        ) is not None
+
     try:
-        api_result = make_fs_request("GET", f"/formapagos/{forma_id}")
-        if api_result.get("status") == "success":
-            logger.info("Forma de pago obtenida correctamente")
-            data = api_result.get("data", {})
-            descripcion = data.get("descripcion", "Sin descripción")
-            api_result.setdefault("message_for_user", f"Forma de pago '{descripcion}' (ID: {forma_id}) obtenida correctamente.")
+        if es_uuid(forma_input):
+            # Buscar directamente por ID
+            api_result = make_fs_request("GET", f"/formapagos/{forma_input}")
+            if api_result.get("status") == "success":
+                forma_data = api_result.get("data", {})
+                if forma_data:
+                    return {
+                        "status": "success",
+                        "data": forma_data,
+                        "message_for_user": f"Forma de pago encontrada: '{forma_data.get('descripcion')}' (Plazo: {forma_data.get('plazovencimiento')} días)."
+                    }
+                else:
+                    return {
+                        "status": "error",
+                        "message": "Forma de pago no encontrada",
+                        "message_for_user": f"No se encontró una forma de pago con ID '{forma_input}'."
+                    }
+
+        # Buscar por descripción
+        all_result = make_fs_request("GET", "/formapagos")
+        if all_result.get("status") != "success":
+            return {
+                "status": "error",
+                "message": "Error al obtener lista de formas de pago",
+                "message_for_user": "No pude obtener la lista de formas de pago para buscar coincidencias."
+            }
+
+        formas_pago = all_result.get("data", [])
+        coincidencias = [
+            f for f in formas_pago if (
+                forma_input.lower() in (f.get("descripcion") or "").lower()
+            )
+        ]
+
+        if len(coincidencias) == 1:
+            forma = coincidencias[0]
+            return {
+                "status": "success",
+                "data": forma,
+                "message_for_user": f"Forma de pago encontrada: '{forma.get('descripcion')}' (Plazo: {forma.get('plazovencimiento')} días)."
+            }
+        elif len(coincidencias) > 1:
+            return {
+                "status": "multiple",
+                "data": coincidencias,
+                "message_for_user": f"Se encontraron {len(coincidencias)} formas de pago que coinciden con '{forma_input}'. Por favor, especifica la descripción exacta o ID si es posible."
+            }
         else:
-            logger.error(f"Error obteniendo forma de pago: {api_result}")
-            api_result.setdefault("message_for_user", f"No pude obtener la forma de pago con ID {forma_id}.")
-        return api_result
+            return {
+                "status": "not_found",
+                "message": "No hay coincidencias",
+                "message_for_user": f"No se encontró ninguna forma de pago que contenga '{forma_input}' en su descripción."
+            }
+
     except Exception as e:
-        logger.error(f"Error al obtener forma de pago {forma_id}: {e}", exc_info=True)
+        logger.error(f"Error al obtener forma de pago '{forma_input}': {e}", exc_info=True)
         return {
             "status": "error",
             "message": str(e),
-            "message_for_user": f"Error al obtener la forma de pago {forma_id}: {str(e)}"
+            "message_for_user": f"Ocurrió un error al obtener la forma de pago '{forma_input}': {str(e)}"
         }
 
 # ----------- UPSERT -----------

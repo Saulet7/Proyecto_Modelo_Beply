@@ -1,6 +1,7 @@
 import logging
 from typing import Any, Optional
 from utils import make_fs_request
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -29,26 +30,83 @@ def list_ejercicios(tool_context):
 
 # ----------- GET -----------
 
-def get_ejercicio(tool_context, ejercicio_id: str):
-    """Obtiene un ejercicio específico por su ID."""
-    logger.info(f"TOOL EXECUTED: get_ejercicio(ejercicio_id='{ejercicio_id}')")
+def get_ejercicio(tool_context, ejercicio_input: str):
+    """
+    Obtiene información de uno o varios ejercicios según ID, nombre o año.
+
+    Args:
+        ejercicio_input (str): ID del ejercicio, nombre o año a buscar.
+    """
+    logger.info(f"TOOL EXECUTED: get_ejercicio(ejercicio_input='{ejercicio_input}')")
+
+    def es_uuid(valor: str) -> bool:
+        return re.fullmatch(
+            r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}", valor
+        ) is not None
+
     try:
-        api_result = make_fs_request("GET", f"/ejercicios/{ejercicio_id}")
-        if api_result.get("status") == "success":
-            logger.info("Ejercicio obtenido correctamente")
-            data = api_result.get("data", {})
-            nombre = data.get("nombre", "Sin nombre")
-            api_result.setdefault("message_for_user", f"Ejercicio '{nombre}' (ID: {ejercicio_id}) obtenido correctamente.")
+        if es_uuid(ejercicio_input):
+            # Buscar directamente por ID
+            api_result = make_fs_request("GET", f"/ejercicios/{ejercicio_input}")
+            if api_result.get("status") == "success":
+                ejercicio_data = api_result.get("data", {})
+                if ejercicio_data:
+                    return {
+                        "status": "success",
+                        "data": ejercicio_data,
+                        "message_for_user": f"Ejercicio encontrado: '{ejercicio_data.get('nombre')}' (Periodo: {ejercicio_data.get('fechainicio')} a {ejercicio_data.get('fechafin')})."
+                    }
+                else:
+                    return {
+                        "status": "error",
+                        "message": "Ejercicio no encontrado",
+                        "message_for_user": f"No se encontró un ejercicio con ID '{ejercicio_input}'."
+                    }
+
+        # Buscar por nombre o año
+        all_result = make_fs_request("GET", "/ejercicios")
+        if all_result.get("status") != "success":
+            return {
+                "status": "error",
+                "message": "Error al obtener lista de ejercicios",
+                "message_for_user": "No pude obtener la lista de ejercicios para buscar coincidencias."
+            }
+
+        ejercicios = all_result.get("data", [])
+        coincidencias = [
+            e for e in ejercicios if (
+                ejercicio_input.lower() in (e.get("nombre") or "").lower() or
+                ejercicio_input in (e.get("fechainicio") or "") or
+                ejercicio_input in (e.get("fechafin") or "")
+            )
+        ]
+
+        if len(coincidencias) == 1:
+            ejercicio = coincidencias[0]
+            return {
+                "status": "success",
+                "data": ejercicio,
+                "message_for_user": f"Ejercicio encontrado: '{ejercicio.get('nombre')}' (Periodo: {ejercicio.get('fechainicio')} a {ejercicio.get('fechafin')})."
+            }
+        elif len(coincidencias) > 1:
+            return {
+                "status": "multiple",
+                "data": coincidencias,
+                "message_for_user": f"Se encontraron {len(coincidencias)} ejercicios que coinciden con '{ejercicio_input}'. Por favor, especifica el nombre exacto o ID si es posible."
+            }
         else:
-            logger.error(f"Error obteniendo ejercicio: {api_result}")
-            api_result.setdefault("message_for_user", f"No pude obtener el ejercicio con ID {ejercicio_id}.")
-        return api_result
+            return {
+                "status": "not_found",
+                "message": "No hay coincidencias",
+                "message_for_user": f"No se encontró ningún ejercicio que contenga '{ejercicio_input}' en su nombre o fechas."
+            }
+
     except Exception as e:
-        logger.error(f"Error al obtener ejercicio {ejercicio_id}: {e}", exc_info=True)
+        logger.error(f"Error al obtener ejercicio '{ejercicio_input}': {e}", exc_info=True)
         return {
             "status": "error",
             "message": str(e),
-            "message_for_user": f"Error al obtener el ejercicio {ejercicio_id}: {str(e)}"
+            "message_for_user": f"Ocurrió un error al obtener el ejercicio '{ejercicio_input}': {str(e)}"
         }
 
 # ----------- UPSERT -----------

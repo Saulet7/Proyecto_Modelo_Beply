@@ -1,7 +1,7 @@
-from contabilidad.prompt import EJERCICIOS_AGENT_INSTRUCTION
-from contabilidad.ejercicios_tools import EJERCICIOS_TOOLS
+from contabilidad_simple.prompt import EJERCICIOS_AGENT_INSTRUCTION
+from contabilidad_simple.ejercicios_tools import EJERCICIOS_TOOLS
 from google.adk.agents import LlmAgent
-import general
+import contabilidad_complex.general as general
 
 EjerciciosAgent = LlmAgent(
     name="EjerciciosAgent",

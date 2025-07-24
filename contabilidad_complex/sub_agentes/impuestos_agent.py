@@ -1,7 +1,7 @@
-from contabilidad.prompt import IMPUESTOS_AGENT_INSTRUCTION
-from contabilidad.impuestos_tools import IMPUESTOS_TOOLS
+from contabilidad_simple.prompt import IMPUESTOS_AGENT_INSTRUCTION
+from contabilidad_simple.impuestos_tools import IMPUESTOS_TOOLS
 from google.adk.agents import LlmAgent
-import general
+import contabilidad_complex.general as general
 
 ImpuestosAgent = LlmAgent(
     name="ImpuestosAgent",

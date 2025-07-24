@@ -1,7 +1,7 @@
-from contabilidad.prompt import ASIENTOS_AGENT_INSTRUCTION
-from contabilidad.asientos_tools import ASIENTOS_TOOLS
+from contabilidad_simple.prompt import ASIENTOS_AGENT_INSTRUCTION
+from contabilidad_simple.asientos_tools import ASIENTOS_TOOLS
 from google.adk.agents import LlmAgent
-import general
+import contabilidad_complex.general as general
 
 AsientosAgent = LlmAgent(
     name="AsientosAgent",

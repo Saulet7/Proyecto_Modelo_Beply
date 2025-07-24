@@ -2,14 +2,14 @@ import logging
 from google.adk.agents import LlmAgent
 from google.genai.types import GenerateContentConfig
 from data import MODEL_GEMINI_2_5_FLASH
-from contabilidad.prompt import CONTABILIDAD_AGENT_INSTRUCTION
+from contabilidad_simple.prompt import CONTABILIDAD_AGENT_INSTRUCTION
 
 # Importar todas las herramientas de contabilidad
-from contabilidad.asientos_tools import ASIENTOS_TOOLS
-from contabilidad.cuentas_tools import CUENTAS_TOOLS
-from contabilidad.ejercicios_tools import EJERCICIOS_TOOLS
-from contabilidad.formaspago_tools import FORMASPAGO_TOOLS
-from contabilidad.impuestos_tools import IMPUESTOS_TOOLS
+from contabilidad_simple.asientos_tools import ASIENTOS_TOOLS
+from contabilidad_simple.cuentas_tools import CUENTAS_TOOLS
+from contabilidad_simple.ejercicios_tools import EJERCICIOS_TOOLS
+from contabilidad_simple.formaspago_tools import FORMASPAGO_TOOLS
+from contabilidad_simple.impuestos_tools import IMPUESTOS_TOOLS
 
 logger = logging.getLogger(__name__)
 

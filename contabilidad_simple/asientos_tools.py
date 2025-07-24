@@ -1,6 +1,7 @@
 import logging
 from typing import Any, Optional
 from utils import make_fs_request
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -29,26 +30,82 @@ def list_asientos(tool_context):
 
 # ----------- GET -----------
 
-def get_asiento(tool_context, asiento_id: str):
-    """Obtiene un asiento específico por su ID."""
-    logger.info(f"TOOL EXECUTED: get_asiento(asiento_id='{asiento_id}')")
+def get_asiento(tool_context, asiento_input: str):
+    """
+    Obtiene información de uno o varios asientos según ID, concepto exacto o parcial.
+
+    Args:
+        asiento_input (str): ID del asiento o parte del concepto a buscar.
+    """
+    logger.info(f"TOOL EXECUTED: get_asiento(asiento_input='{asiento_input}')")
+
+    def es_uuid(valor: str) -> bool:
+        return re.fullmatch(
+            r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}", valor
+        ) is not None
+
     try:
-        api_result = make_fs_request("GET", f"/asientos/{asiento_id}")
-        if api_result.get("status") == "success":
-            logger.info("Asiento obtenido correctamente")
-            data = api_result.get("data", {})
-            descripcion = data.get("concepto", "Sin concepto")
-            api_result.setdefault("message_for_user", f"Asiento '{descripcion}' (ID: {asiento_id}) obtenido correctamente.")
+        if es_uuid(asiento_input):
+            # Buscar directamente por ID
+            api_result = make_fs_request("GET", f"/asientos/{asiento_input}")
+            if api_result.get("status") == "success":
+                asiento_data = api_result.get("data", {})
+                if asiento_data:
+                    return {
+                        "status": "success",
+                        "data": asiento_data,
+                        "message_for_user": f"Asiento encontrado: '{asiento_data.get('concepto')}' (ID: {asiento_data.get('id')}, Número: {asiento_data.get('numero')})."
+                    }
+                else:
+                    return {
+                        "status": "error",
+                        "message": "Asiento no encontrado",
+                        "message_for_user": f"No se encontró un asiento con ID '{asiento_input}'."
+                    }
+
+        # Buscar por concepto parcial o número de asiento
+        all_result = make_fs_request("GET", "/asientos")
+        if all_result.get("status") != "success":
+            return {
+                "status": "error",
+                "message": "Error al obtener lista de asientos",
+                "message_for_user": "No pude obtener la lista de asientos para buscar coincidencias."
+            }
+
+        asientos = all_result.get("data", [])
+        coincidencias = [
+            a for a in asientos if (
+                asiento_input.lower() in (a.get("concepto") or "").lower() or
+                asiento_input.lower() in (a.get("numero") or "").lower()
+            )
+        ]
+
+        if len(coincidencias) == 1:
+            asiento = coincidencias[0]
+            return {
+                "status": "success",
+                "data": asiento,
+                "message_for_user": f"Asiento encontrado: '{asiento.get('concepto')}' (Número: {asiento.get('numero')})."
+            }
+        elif len(coincidencias) > 1:
+            return {
+                "status": "multiple",
+                "data": coincidencias,
+                "message_for_user": f"Se encontraron {len(coincidencias)} asientos que coinciden con '{asiento_input}'. Por favor, especifica el ID o número exacto si es posible."
+            }
         else:
-            logger.error(f"Error obteniendo asiento: {api_result}")
-            api_result.setdefault("message_for_user", f"No pude obtener el asiento con ID {asiento_id}.")
-        return api_result
+            return {
+                "status": "not_found",
+                "message": "No hay coincidencias",
+                "message_for_user": f"No se encontró ningún asiento que contenga '{asiento_input}' en su concepto o número."
+            }
+
     except Exception as e:
-        logger.error(f"Error al obtener asiento {asiento_id}: {e}", exc_info=True)
+        logger.error(f"Error al obtener asiento '{asiento_input}': {e}", exc_info=True)
         return {
             "status": "error",
             "message": str(e),
-            "message_for_user": f"Error al obtener el asiento {asiento_id}: {str(e)}"
+            "message_for_user": f"Ocurrió un error al obtener el asiento '{asiento_input}': {str(e)}"
         }
 
 # ----------- UPSERT -----------
