@@ -3,7 +3,12 @@ from typing import Any, Optional
 from utils import make_fs_request
 
 logger = logging.getLogger(__name__)
-
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    filename="logs/contabilidad.log",  # ← aquí se define dónde se guardan
+    filemode="a"
+)
 # ----------- LIST -----------
 
 def list_impuestos(tool_context):
@@ -60,29 +65,46 @@ def upsert_impuesto(tool_context, impuesto_id: Optional[str] = None, **kwargs: A
     """
     Crea o actualiza un impuesto.
     Si se proporciona `impuesto_id`, actualiza. Si no, crea.
+    
+    Los únicos campos realmente obligatorios son:
+    - descripcion: Nombre descriptivo del impuesto (ej. "IVA General")
+    - iva: Porcentaje del IVA (ej. 21.0)
+    
+    El resto se rellenará con valores por defecto.
     """
     logger.info(f"TOOL EXECUTED: upsert_impuesto(impuesto_id='{impuesto_id}', kwargs={kwargs})")
 
-    required_fields = [
-        "codsubcuentarep", "codsubcuentarepre", "codsubcuentasop",
-        "codsubcuentasopre", "descripcion", "iva", "recargo"
-    ]
+    # Campos mínimos realmente necesarios
+    required_fields = ["descripcion", "iva"]
 
     if not impuesto_id:
-        # Validar campos solo si es creación
-        missing = [f for f in required_fields if f not in kwargs or kwargs[f] in [None, ""]]
+        # Validar solo los campos mínimos si es creación
+        # Verificar que los campos no estén vacíos ni sean None
+        missing = []
+        for field in required_fields:
+            if field not in kwargs or kwargs[field] is None or kwargs[field] == "":
+                missing.append(field)
+        
         if missing:
             return {
                 "status": "error",
                 "message": f"Faltan campos obligatorios: {', '.join(missing)}",
-                "message_for_user": f"Para crear un impuesto necesito: {', '.join(missing)}"
+                "message_for_user": f"Para crear un impuesto necesito como mínimo: {', '.join(missing)}"
             }
-
-    # Defaults en ambos casos
+    
+    # Valores por defecto para simplificar la creación
     defaults = {
-        "activo": True,
-        "tipo": 1
+        "activo": True,                # Activo por defecto
+        "codimpuesto": "",             # Código autogenerado
+        "codsubcuentarep": "477000",   # Subcuenta repercutido estándar
+        "codsubcuentarepre": "477000", # Subcuenta repercutido RE estándar
+        "codsubcuentasop": "472000",   # Subcuenta soportado estándar
+        "codsubcuentasopre": "472000", # Subcuenta soportado RE estándar
+        "recargo": 0.0,                # Sin recargo por defecto
+        "tipo": 1                      # Tipo estándar
     }
+    
+    # Aplicar defaults sólo para los campos que faltan
     for k, v in defaults.items():
         kwargs.setdefault(k, v)
 
@@ -90,15 +112,33 @@ def upsert_impuesto(tool_context, impuesto_id: Optional[str] = None, **kwargs: A
     endpoint = f"/impuestos/{impuesto_id}" if impuesto_id else "/impuestos"
 
     try:
+        # Asegurarse de que 'iva' sea un número
+        if "iva" in kwargs and not isinstance(kwargs["iva"], (int, float)):
+            try:
+                kwargs["iva"] = float(kwargs["iva"])
+            except (ValueError, TypeError):
+                return {
+                    "status": "error",
+                    "message": "El valor de 'iva' debe ser un número",
+                    "message_for_user": "El porcentaje de IVA debe ser un número válido"
+                }
+
         api_result = make_fs_request(method, endpoint, data=kwargs)
         if api_result.get("status") == "success":
             logger.info("Impuesto creado/actualizado correctamente")
             accion = "actualizado" if impuesto_id else "creado"
             descripcion = kwargs.get("descripcion", "sin descripción")
-            api_result.setdefault("message_for_user", f"Impuesto '{descripcion}' {accion} correctamente.")
+            iva_info = f"IVA {kwargs.get('iva')}%"
+            recargo_info = ""
+            if kwargs.get("recargo") and kwargs.get("recargo") > 0:
+                recargo_info = f" y recargo {kwargs.get('recargo')}%"
+            
+            api_result.setdefault("message_for_user", 
+                               f"Impuesto '{descripcion}' ({iva_info}{recargo_info}) {accion} correctamente.")
         else:
             logger.error(f"Error en upsert impuesto: {api_result}")
-            api_result.setdefault("message_for_user", f"No pude guardar el impuesto. {api_result.get('message', '')}")
+            api_result.setdefault("message_for_user", 
+                               f"No pude guardar el impuesto. {api_result.get('message', '')}")
         return api_result
     except Exception as e:
         logger.error(f"Error en upsert impuesto: {e}", exc_info=True)

@@ -115,27 +115,39 @@ def upsert_ejercicio(tool_context, ejercicio_id: Optional[str] = None, **kwargs:
     """
     Crea o actualiza un ejercicio contable.
     Si se proporciona `ejercicio_id`, actualiza. Si no, crea.
+    
+    Los únicos campos realmente obligatorios son:
+    - nombre: Nombre del ejercicio (ej. "Ejercicio 2025")
+    - fechainicio: Fecha de inicio (formato YYYY-MM-DD)
+    - fechafin: Fecha de fin (formato YYYY-MM-DD)
+    - idempresa: ID de la empresa
+    
+    El resto se rellenará con valores por defecto.
     """
     logger.info(f"TOOL EXECUTED: upsert_ejercicio(ejercicio_id='{ejercicio_id}', kwargs={kwargs})")
 
-    required_fields = [
-        "estado", "fechafin", "fechainicio", "idempresa", "longsubcuenta", "nombre"
-    ]
+    # Campos mínimos realmente necesarios
+    required_fields = ["nombre", "fechainicio", "fechafin", "idempresa"]
 
     if not ejercicio_id:
-        # Validar campos solo si es creación
+        # Validar solo los campos mínimos si es creación
         missing = [f for f in required_fields if f not in kwargs or kwargs[f] in [None, ""]]
         if missing:
             return {
                 "status": "error",
                 "message": f"Faltan campos obligatorios: {', '.join(missing)}",
-                "message_for_user": f"Para crear un ejercicio necesito: {', '.join(missing)}"
+                "message_for_user": f"Para crear un ejercicio necesito como mínimo: {', '.join(missing)}"
             }
-
-    # Defaults en ambos casos (si es necesario)
-    # defaults = {}
-    # for k, v in defaults.items():
-    #     kwargs.setdefault(k, v)
+    
+    # Valores por defecto para simplificar la creación
+    defaults = {
+        "estado": "abierto",       # Estado por defecto: abierto
+        "longsubcuenta": 10,       # Longitud estándar de subcuenta
+    }
+    
+    # Aplicar defaults sólo para los campos que faltan
+    for k, v in defaults.items():
+        kwargs.setdefault(k, v)
 
     method = "PUT" if ejercicio_id else "POST"
     endpoint = f"/ejercicios/{ejercicio_id}" if ejercicio_id else "/ejercicios"
@@ -146,10 +158,13 @@ def upsert_ejercicio(tool_context, ejercicio_id: Optional[str] = None, **kwargs:
             logger.info("Ejercicio creado/actualizado correctamente")
             accion = "actualizado" if ejercicio_id else "creado"
             nombre = kwargs.get("nombre", "sin nombre")
-            api_result.setdefault("message_for_user", f"Ejercicio '{nombre}' {accion} correctamente.")
+            periodo = f"({kwargs.get('fechainicio')} a {kwargs.get('fechafin')})"
+            api_result.setdefault("message_for_user", 
+                               f"Ejercicio '{nombre}' {periodo} {accion} correctamente.")
         else:
             logger.error(f"Error en upsert ejercicio: {api_result}")
-            api_result.setdefault("message_for_user", f"No pude guardar el ejercicio. {api_result.get('message', '')}")
+            api_result.setdefault("message_for_user", 
+                               f"No pude guardar el ejercicio. {api_result.get('message', '')}")
         return api_result
     except Exception as e:
         logger.error(f"Error en upsert ejercicio: {e}", exc_info=True)

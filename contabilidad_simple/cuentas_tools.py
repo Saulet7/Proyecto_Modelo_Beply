@@ -114,28 +114,59 @@ def upsert_cuenta(tool_context, cuenta_id: Optional[str] = None, **kwargs: Any) 
     """
     Crea o actualiza una cuenta contable.
     Si se proporciona `cuenta_id`, actualiza. Si no, crea.
+    
+    Los únicos campos realmente obligatorios son:
+    - codcuenta: Código de la cuenta (ej. 572000)
+    - descripcion: Nombre descriptivo de la cuenta (ej. "Bancos")
+    - codejercicio: Código del ejercicio contable al que pertenece
+    
+    El resto se rellenará con valores por defecto.
     """
     logger.info(f"TOOL EXECUTED: upsert_cuenta(cuenta_id='{cuenta_id}', kwargs={kwargs})")
 
-    required_fields = [
-        "codcuenta", "codcuentaesp", "codejercicio", "debe", "descripcion",
-        "haber", "parent_codcuenta", "parent_idcuenta", "saldo"
-    ]
+    # Campos mínimos realmente necesarios
+    required_fields = ["codcuenta", "descripcion", "codejercicio"]
 
     if not cuenta_id:
-        # Validar campos solo si es creación
+        # Validar solo los campos mínimos si es creación
         missing = [f for f in required_fields if f not in kwargs or kwargs[f] in [None, ""]]
         if missing:
             return {
                 "status": "error",
                 "message": f"Faltan campos obligatorios: {', '.join(missing)}",
-                "message_for_user": f"Para crear una cuenta necesito: {', '.join(missing)}"
+                "message_for_user": f"Para crear una cuenta necesito como mínimo: {', '.join(missing)}"
             }
-
-    # Defaults en ambos casos (si es necesario)
-    # defaults = {}
-    # for k, v in defaults.items():
-    #     kwargs.setdefault(k, v)
+    
+    # Obtener el ejercicio actual si no se proporciona
+    if "codejercicio" not in kwargs:
+        try:
+            ejercicios_result = make_fs_request("GET", "/ejercicios")
+            if ejercicios_result.get("status") == "success":
+                ejercicios = ejercicios_result.get("data", [])
+                # Buscar ejercicio actual (abierto)
+                for ejercicio in ejercicios:
+                    if ejercicio.get("estado") == "abierto":
+                        kwargs["codejercicio"] = ejercicio.get("codejercicio")
+                        break
+                # Si no se encuentra, usar el primero de la lista
+                if "codejercicio" not in kwargs and ejercicios:
+                    kwargs["codejercicio"] = ejercicios[0].get("codejercicio")
+        except Exception as e:
+            logger.warning(f"Error al obtener ejercicio automático: {e}")
+    
+    # Valores por defecto para simplificar la creación
+    defaults = {
+        "codcuentaesp": "",         # Sin código especial por defecto
+        "debe": 0.0,                # Saldo debe inicial cero
+        "haber": 0.0,               # Saldo haber inicial cero
+        "saldo": 0.0,               # Saldo total inicial cero
+        "parent_codcuenta": "",     # Sin cuenta padre (cuenta raíz)
+        "parent_idcuenta": ""       # Sin ID de cuenta padre (cuenta raíz)
+    }
+    
+    # Aplicar defaults sólo para los campos que faltan
+    for k, v in defaults.items():
+        kwargs.setdefault(k, v)
 
     method = "PUT" if cuenta_id else "POST"
     endpoint = f"/cuentas/{cuenta_id}" if cuenta_id else "/cuentas"
@@ -146,10 +177,13 @@ def upsert_cuenta(tool_context, cuenta_id: Optional[str] = None, **kwargs: Any) 
             logger.info("Cuenta creada/actualizada correctamente")
             accion = "actualizada" if cuenta_id else "creada"
             descripcion = kwargs.get("descripcion", "sin descripción")
-            api_result.setdefault("message_for_user", f"Cuenta '{descripcion}' {accion} correctamente.")
+            codigo = kwargs.get("codcuenta", "")
+            api_result.setdefault("message_for_user", 
+                               f"Cuenta '{descripcion}' ({codigo}) {accion} correctamente.")
         else:
             logger.error(f"Error en upsert cuenta: {api_result}")
-            api_result.setdefault("message_for_user", f"No pude guardar la cuenta. {api_result.get('message', '')}")
+            api_result.setdefault("message_for_user", 
+                               f"No pude guardar la cuenta. {api_result.get('message', '')}")
         return api_result
     except Exception as e:
         logger.error(f"Error en upsert cuenta: {e}", exc_info=True)

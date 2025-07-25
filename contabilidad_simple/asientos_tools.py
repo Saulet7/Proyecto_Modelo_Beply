@@ -114,28 +114,60 @@ def upsert_asiento(tool_context, asiento_id: Optional[str] = None, **kwargs: Any
     """
     Crea o actualiza un asiento contable.
     Si se proporciona `asiento_id`, actualiza. Si no, crea.
+    
+    Los únicos campos obligatorios son:
+    - concepto: Descripción del asiento
+    - fecha: Fecha del asiento (YYYY-MM-DD)
+    - idempresa: ID de la empresa
+    
+    El resto se rellenará con valores por defecto.
     """
     logger.info(f"TOOL EXECUTED: upsert_asiento(asiento_id='{asiento_id}', kwargs={kwargs})")
 
-    required_fields = [
-        "canal", "codejercicio", "concepto", "documento", "editable",
-        "fecha", "iddiario", "idempresa", "numero", "operacion"
-    ]
+    # Campos mínimos requeridos
+    required_fields = ["concepto", "fecha", "idempresa"]
 
     if not asiento_id:
-        # Validar campos solo si es creación
+        # Validar solo los campos mínimos si es creación
         missing = [f for f in required_fields if f not in kwargs or kwargs[f] in [None, ""]]
         if missing:
             return {
                 "status": "error",
                 "message": f"Faltan campos obligatorios: {', '.join(missing)}",
-                "message_for_user": f"Para crear un asiento necesito: {', '.join(missing)}"
+                "message_for_user": f"Para crear un asiento necesito como mínimo: {', '.join(missing)}"
             }
 
-    # Defaults en ambos casos
+    # Obtener el ejercicio actual si no se proporciona
+    if "codejercicio" not in kwargs and "fecha" in kwargs:
+        try:
+            ejercicios_result = make_fs_request("GET", "/ejercicios")
+            if ejercicios_result.get("status") == "success":
+                ejercicios = ejercicios_result.get("data", [])
+                # Buscar ejercicio que incluya la fecha
+                fecha_asiento = kwargs["fecha"]
+                for ejercicio in ejercicios:
+                    if ejercicio.get("fechainicio") <= fecha_asiento <= ejercicio.get("fechafin"):
+                        kwargs["codejercicio"] = ejercicio.get("codejercicio")
+                        break
+                # Si no se encuentra, usar el más reciente
+                if "codejercicio" not in kwargs and ejercicios:
+                    kwargs["codejercicio"] = ejercicios[0].get("codejercicio")
+        except Exception as e:
+            logger.warning(f"Error al obtener ejercicio automático: {e}")
+    
+    # Valores por defecto para simplificar la creación
     defaults = {
-        "importe": 0
+        "canal": "web",                  # Canal por defecto
+        "codejercicio": "ACTUAL",        # Ejercicio actual (si no se pudo determinar antes)
+        "documento": f"AUTO-{kwargs.get('fecha', 'HOY')}",  # Documento autogenerado
+        "editable": True,                # Editable por defecto
+        "iddiario": 1,                   # Diario general por defecto
+        "numero": "AUTO",                # Número autogenerado
+        "operacion": "normal",           # Operación normal por defecto
+        "importe": 0.0                   # Importe cero por defecto
     }
+    
+    # Aplicar defaults sólo para los campos que faltan
     for k, v in defaults.items():
         kwargs.setdefault(k, v)
 
@@ -148,10 +180,12 @@ def upsert_asiento(tool_context, asiento_id: Optional[str] = None, **kwargs: Any
             logger.info("Asiento creado/actualizado correctamente")
             accion = "actualizado" if asiento_id else "creado"
             concepto = kwargs.get("concepto", "sin concepto")
-            api_result.setdefault("message_for_user", f"Asiento '{concepto}' {accion} correctamente.")
+            api_result.setdefault("message_for_user", 
+                                f"Asiento '{concepto}' {accion} correctamente con fecha {kwargs.get('fecha')}.")
         else:
             logger.error(f"Error en upsert asiento: {api_result}")
-            api_result.setdefault("message_for_user", f"No pude guardar el asiento. {api_result.get('message', '')}")
+            api_result.setdefault("message_for_user", 
+                                f"No pude guardar el asiento. {api_result.get('message', '')}")
         return api_result
     except Exception as e:
         logger.error(f"Error en upsert asiento: {e}", exc_info=True)

@@ -113,35 +113,46 @@ def upsert_forma_pago(tool_context, forma_id: Optional[str] = None, **kwargs: An
     """
     Crea o actualiza una forma de pago.
     Si se proporciona `forma_id`, actualiza. Si no, crea.
+    
+    Los únicos campos realmente obligatorios son:
+    - descripcion: Nombre descriptivo de la forma de pago (ej. "Tarjeta de crédito")
+    - idempresa: ID de la empresa
+    
+    El resto se rellenará con valores por defecto.
     """
     logger.info(f"TOOL EXECUTED: upsert_forma_pago(forma_id='{forma_id}', kwargs={kwargs})")
 
-    required_fields = [
-        "codcuentabanco", "descripcion", "domiciliado", "idempresa",
-        "plazovencimiento", "tipovencimiento"
-    ]
+    # Campos mínimos realmente necesarios
+    required_fields = ["descripcion", "idempresa"]
 
     if not forma_id:
-        # Validar campos solo si es creación
+        # Validar solo los campos mínimos si es creación
         missing = [f for f in required_fields if f not in kwargs or kwargs[f] in [None, ""]]
         if missing:
             return {
                 "status": "error",
                 "message": f"Faltan campos obligatorios: {', '.join(missing)}",
-                "message_for_user": f"Para crear una forma de pago necesito: {', '.join(missing)}"
+                "message_for_user": f"Para crear una forma de pago necesito como mínimo: {', '.join(missing)}"
             }
-
-    # Defaults en ambos casos
+    
+    # Valores por defecto para simplificar la creación
     defaults = {
-        "activa": True,
-        "imprimir": True,
-        "pagado": False
+        "activa": True,              # Activa por defecto
+        "codcuentabanco": "",        # Sin cuenta bancaria específica
+        "codpago": "",               # Código de pago autogenerado
+        "domiciliado": False,        # No domiciliado por defecto
+        "imprimir": True,            # Se puede imprimir por defecto
+        "pagado": False,             # No marcado como pagado por defecto
+        "plazovencimiento": 0,       # Plazo de vencimiento inmediato por defecto
+        "tipovencimiento": "dias"    # Tipo de vencimiento en días por defecto
     }
+    
+    # Aplicar defaults sólo para los campos que faltan
     for k, v in defaults.items():
         kwargs.setdefault(k, v)
 
     method = "PUT" if forma_id else "POST"
-    endpoint = f"/formapagos/{forma_id}" if forma_id else "/formapagos"
+    endpoint = f"/formaspago/{forma_id}" if forma_id else "/formaspago"
 
     try:
         api_result = make_fs_request(method, endpoint, data=kwargs)
@@ -149,10 +160,16 @@ def upsert_forma_pago(tool_context, forma_id: Optional[str] = None, **kwargs: An
             logger.info("Forma de pago creada/actualizada correctamente")
             accion = "actualizada" if forma_id else "creada"
             descripcion = kwargs.get("descripcion", "sin descripción")
-            api_result.setdefault("message_for_user", f"Forma de pago '{descripcion}' {accion} correctamente.")
+            plazo_info = ""
+            if kwargs.get("plazovencimiento") and kwargs.get("plazovencimiento") > 0:
+                plazo_info = f" con plazo de {kwargs.get('plazovencimiento')} {kwargs.get('tipovencimiento', 'días')}"
+            
+            api_result.setdefault("message_for_user", 
+                               f"Forma de pago '{descripcion}'{plazo_info} {accion} correctamente.")
         else:
             logger.error(f"Error en upsert forma de pago: {api_result}")
-            api_result.setdefault("message_for_user", f"No pude guardar la forma de pago. {api_result.get('message', '')}")
+            api_result.setdefault("message_for_user", 
+                               f"No pude guardar la forma de pago. {api_result.get('message', '')}")
         return api_result
     except Exception as e:
         logger.error(f"Error en upsert forma de pago: {e}", exc_info=True)

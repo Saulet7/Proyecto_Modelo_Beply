@@ -1,12 +1,9 @@
 # EN: el archivo que define LoopGeneral
 import logging
 from google.adk.agents import LoopAgent
-from dispatcher.agent import DispatcherAgent, LlmAgent
-from data import MODEL_GEMINI_2_5_FLASH
-from google.genai.types import GenerateContentConfig
-from reduced_loop.prompt import EXIT_AGENT_INSTRUCTION
-from components import GlobalWorkflowStatus
-from components import ExitLoopSignalTool, ExitConditionChecker
+from dispatcher.agent import DispatcherAgent
+
+from components import ExitConditionChecker
 
 logger = logging.getLogger(__name__)
 
