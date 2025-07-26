@@ -2,8 +2,8 @@ import logging
 from google.adk.agents import LlmAgent
 from google.genai.types import GenerateContentConfig
 from data import MODEL_GEMINI_2_5_FLASH
-from productos_agent.prompt import AGENT_INSTRUCTION
-from productos_agent.tools import AGENT_TOOLS
+from .prompt import AGENT_INSTRUCTION
+from .tools import AGENT_TOOLS
 from components import ExitLoopSignalTool
 
 logger = logging.getLogger(__name__)

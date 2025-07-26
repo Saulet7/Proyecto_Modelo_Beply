@@ -8,10 +8,10 @@ from components import ExitLoopSignalTool
 
 logger = logging.getLogger(__name__)
 
-AlmacenesAgent = LlmAgent(
-    name="AlmacenesAgent",
+StockAgent = LlmAgent(
+    name="StockAgent",
     model=MODEL_GEMINI_2_5_FLASH,
-    description="Agente especializado en gestión de almacenes",
+    description="Agente especializado en gestión de transportistas",
     instruction=AGENT_INSTRUCTION,
     generate_content_config=GenerateContentConfig(
         temperature=0.2,
