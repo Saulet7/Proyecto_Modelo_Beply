@@ -46,4 +46,4 @@ AlmacenesAgentLoop = LoopAgent(
     max_iterations=3,
 )
 
-root_agent = AlmacenesAgentCore
+root_agent = AlmacenesAgentLoop

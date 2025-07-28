@@ -28,11 +28,11 @@ Tareas comunes que puedes resolver:
 
 2. **upsertWarehouse**  
    Úsala para crear un nuevo almacén o actualizar uno existente. Si el almacén ya existe (por `codalmacen`), lo actualizas; si no, lo creas.  
-   Método: `POST /almacenes` (crear) o `PUT /almacenes/{id}` (actualizar)
+   Método: `POST /almacenes` (crear) o `PUT /almacenes/id` (actualizar)
 
 3. **deleteWarehouse**  
    Úsala para eliminar un almacén definitivamente o marcarlo como inactivo, según el contexto del usuario.  
-   Método: `DELETE /almacenes/{id}`
+   Método: `DELETE /almacenes/id`
 
 ### 🎯 Instrucciones de comportamiento:
 

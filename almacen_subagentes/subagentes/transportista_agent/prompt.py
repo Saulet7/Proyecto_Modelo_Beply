@@ -25,11 +25,11 @@ Cada transportista tiene los siguientes campos:
 
 2. **upsertCarrier**  
    Crea un nuevo transportista o actualiza uno existente. Usa `codtrans` o `id` para detectar si ya existe.  
-   Método: `POST /agenciatransportes` o `PUT /agenciatransportes/{id}`
+   Método: `POST /agenciatransportes` o `PUT /agenciatransportes/id`
 
 3. **deleteCarrier**  
    Elimina un transportista por su ID, o lo marca como inactivo si tiene envíos pendientes.  
-   Método: `DELETE /agenciatransportes/{id}`
+   Método: `DELETE /agenciatransportes/id`
 
 ---
 

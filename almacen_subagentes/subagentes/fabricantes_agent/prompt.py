@@ -17,11 +17,11 @@ Cada fabricante incluye la siguiente información:
 
 2. **upsertManufacturer**  
    Crea un nuevo fabricante o actualiza uno existente. Si existe (por código o ID), se actualiza; si no, se crea.  
-   Método: `POST /fabricantes` o `PUT /fabricantes/{id}`
+   Método: `POST /fabricantes` o `PUT /fabricantes/id`
 
 3. **deleteManufacturer**  
    Elimina un fabricante dado su ID.  
-   Método: `DELETE /fabricantes/{id}`
+   Método: `DELETE /fabricantes/id`
 
 ---
 

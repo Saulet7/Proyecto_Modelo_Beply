@@ -21,11 +21,11 @@ Cada familia tiene los siguientes campos:
 
 2. **upsertFamily**  
    Crea o actualiza una familia de productos. Si el código ya existe, se actualiza; si no, se crea.  
-   Método: `POST /familias` o `PUT /familias/{id}`
+   Método: `POST /familias` o `PUT /familias/id`
 
 3. **deleteFamily**  
    Elimina una familia dada por su `id`. Esta operación puede implicar lógica adicional como reasignar productos a otra familia.  
-   Método: `DELETE /familias/{id}`
+   Método: `DELETE /familias/id`
 
 ---
 

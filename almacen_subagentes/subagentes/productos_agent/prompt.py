@@ -38,15 +38,15 @@ Cada producto tiene los siguientes campos:
 
 2. **getProduct**  
    Obtiene la información completa de un producto por su `idproducto`.  
-   Método: `GET /productos/{id}`
+   Método: `GET /productos/id`
 
 3. **upsertProduct**  
    Crea o actualiza un producto. Si se proporciona `idproducto` o `referencia`, se actualiza; si no, se crea.  
-   Método: `POST /productos` o `PUT /productos/{id}`
+   Método: `POST /productos` o `PUT /productos/id`
 
 4. **deleteProduct**  
    Elimina o marca un producto como descatalogado.  
-   Método: `DELETE /productos/{id}`
+   Método: `DELETE /productos/id`
 
 5. **bulkImportProductsFromCSV**  
    Importa productos en lote desde un archivo CSV. Utiliza internamente `upsertProduct`.  
