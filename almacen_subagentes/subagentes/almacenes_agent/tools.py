@@ -77,16 +77,16 @@ def create_warehouse(
 def update_warehouse(
     tool_context,
     id: str,
-    codalmacen: Optional[str] = None,
-    nombre: Optional[str] = None,
-    direccion: Optional[str] = None,
-    ciudad: Optional[str] = None,
-    provincia: Optional[str] = None,
-    codpostal: Optional[str] = None,
-    codpais: Optional[str] = None,
-    telefono: Optional[str] = None,
-    idempresa: Optional[int] = None,
-    apartado: Optional[str] = None
+    codalmacen: Optional[str],
+    nombre: Optional[str],
+    direccion: Optional[str],
+    ciudad: Optional[str],
+    provincia: Optional[str],
+    codpostal: Optional[str],
+    codpais: Optional[str],
+    telefono: Optional[str],
+    idempresa: Optional[int],
+    apartado: Optional[str]
 ):
     logger.info(f"TOOL EXECUTED: update_warehouse(id='{id}')")
 
@@ -97,7 +97,6 @@ def update_warehouse(
             "message_for_user": "No se puede actualizar un almacén sin identificarlo (ID requerido)."
         }
 
-    # Construir el diccionario solo con campos que no sean None
     posibles_campos = {
         "codalmacen": codalmacen,
         "nombre": nombre,

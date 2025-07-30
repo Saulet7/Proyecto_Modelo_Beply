@@ -26,11 +26,15 @@ Tareas comunes que puedes resolver:
    Úsala para buscar o listar almacenes. Acepta filtros como `codalmacen`, `ciudad`, `nombre`, `activo`, etc.  
    Método: `GET /almacenes`
 
-2. **upsertWarehouse**  
-   Úsala para crear un nuevo almacén o actualizar uno existente. Si el almacén ya existe (por `codalmacen`), lo actualizas; si no, lo creas.  
-   Método: `POST /almacenes` (crear) o `PUT /almacenes/id` (actualizar)
+2. **createWarehouse**  
+   Úsala para crear un nuevo almacén.  
+   Método: `POST /almacenes` (crear) 
 
-3. **deleteWarehouse**  
+3.  **updateWarehouse** 
+   Úsala para actualizar uno existente. Ten en cuenta que los argumentos son opcionales menos el id y se tiene que es pecificar como minimo un campo a actualizar.
+   Metodo: `PUT /almacenes/id` (actualizar)
+
+4. **deleteWarehouse**  
    Úsala para eliminar un almacén definitivamente o marcarlo como inactivo, según el contexto del usuario.  
    Método: `DELETE /almacenes/id`
 
