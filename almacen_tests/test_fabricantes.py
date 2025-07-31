@@ -30,54 +30,67 @@ async def call_agent_async(query: str) -> str:
     return "sin respuesta"
 
 async def test_listar_fabricantes():
-    response = await call_agent_async("Quiero ver todos los fabricantes.")
-    api_response = make_fs_request("GET", "/fabricantes")
+    try:
+        response = await call_agent_async("Quiero ver todos los fabricantes.")
+        api_response = make_fs_request("GET", "/fabricantes")
 
-    if api_response["status"] != "success":
-        print("❌ test_listar_fabricantes: ERROR API")
-        return
+        if api_response["status"] != "success":
+            print("❌ test_listar_fabricantes: ERROR API")
+            return
 
-    fabricantes = api_response["data"]
-    if fabricantes and any(str(a["codalmacen"]).lower() in response for a in fabricantes):
-        print("✅ test_listar_fabricantes: PASA")
-    else:
+        fabricantes = api_response["data"]
+    
+        if fabricantes and any(str(a["codfabricante"]).lower() in response for a in fabricantes):
+            print("✅ test_listar_fabricantes: PASA")
+        else:
+            print("❌ test_listar_fabricantes: FALLA")
+    except:
         print("❌ test_listar_fabricantes: FALLA")
 
 async def test_crear_fabricante():
-    make_fs_request("DELETE", "/fabricantes/8")  # Asegura limpieza previa
+    try:
+        make_fs_request("DELETE", "/fabricantes/8")  # Asegura limpieza previa
 
-    response = await call_agent_async("Agrega un nuevo fabricante con nombre MMMM, solo uno")
-    consulta = make_fs_request("GET", "/fabricantes")
-    fabricantes = consulta.get("data", [])
+        response = await call_agent_async("Agrega un nuevo fabricante con nombre MMMM, solo uno")
+        consulta = make_fs_request("GET", "/fabricantes")
+        fabricantes = consulta.get("data", [])
 
-    if any(f["nombre"] == "MMMM" for f in fabricantes):
-        print("✅ test_crear_fabricante: PASA")
-    else:
+        if any(f["nombre"] == "MMMM" for f in fabricantes):
+            print("✅ test_crear_fabricante: PASA")
+        else:
+            print("❌ test_crear_fabricante: FALLA")
+    except:
         print("❌ test_crear_fabricante: FALLA")
 
 async def test_actualizar_fabricante():
-    # Asegura existencia previa
-    response = await call_agent_async("Actualiza el nombre del fabricante MMMM a WWWW, no crees uno nuevo")
-    consulta = make_fs_request("GET", "/fabricantes")
-    fabricantes = consulta.get("data", [])
+    try:
+        # Asegura existencia previa
+        response = await call_agent_async("Actualiza el nombre del fabricante MMMM a WWWW, no crees uno nuevo")
+        consulta = make_fs_request("GET", "/fabricantes")
+        fabricantes = consulta.get("data", [])
 
-    if any(f["nombre"].lower() == "wwww" for f in fabricantes):
-        print("✅ test_actualizar_fabricante: PASA")
-    else:
+        if any(f["nombre"].lower() == "wwww" for f in fabricantes):
+            print("✅ test_actualizar_fabricante: PASA")
+        else:
+            print("❌ test_actualizar_fabricante: FALLA")
+    except:
         print("❌ test_actualizar_fabricante: FALLA")
 
 async def test_eliminar_fabricante():
-    response = await call_agent_async("Elimina el fabricante WWWW, si no lo encuentras elimina el MMMM el primero que encuentres.")
-    consulta = make_fs_request("GET", "/fabricantes")
-    fabricantes = consulta.get("data", [])
+    try:
+        response = await call_agent_async("Elimina el fabricante WWWW, si no lo encuentras elimina el MMMM el primero que encuentres.")
+        consulta = make_fs_request("GET", "/fabricantes")
+        fabricantes = consulta.get("data", [])
 
-    existe = False
-    for f in fabricantes:
-        existe = (f["nombre"] == "WWWW" or f["nombre"] == "MMMM")
+        existe = False
+        for f in fabricantes:
+            existe = (f["nombre"] == "WWWW" or f["nombre"] == "MMMM")
 
-    if not existe:
-        print("✅ test_eliminar_fabricante: PASA")
-    else:
+        if not existe:
+            print("✅ test_eliminar_fabricante: PASA")
+        else:
+            print("❌ test_eliminar_fabricante: FALLA")
+    except:
         print("❌ test_eliminar_fabricante: FALLA")
 
 async def main():
