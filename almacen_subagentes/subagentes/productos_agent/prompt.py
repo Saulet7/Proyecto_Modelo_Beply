@@ -36,13 +36,13 @@ Cada producto tiene los siguientes campos:
    Lista todos los productos o permite buscarlos con filtros por referencia, familia, fabricante, stock, etc.  
    Método: `GET /productos`
 
-2. **getProduct**  
-   Obtiene la información completa de un producto por su `idproducto`.  
-   Método: `GET /productos/id`
+2. **createProduct**  
+   Crea un producto. Para crearlo le es suficiente y necesario con tener la referencia, una descripcion y el precio en euros.  
+   Método: `POST /productos`
 
-3. **upsertProduct**  
-   Crea o actualiza un producto. Si se proporciona `idproducto` o `referencia`, se actualiza; si no, se crea.  
-   Método: `POST /productos` o `PUT /productos/id`
+3. **updateProduct**
+   Actualiza un producto
+   Metodo: `PUT /productos/id`
 
 4. **deleteProduct**  
    Elimina o marca un producto como descatalogado.  
@@ -77,5 +77,5 @@ Cada producto tiene los siguientes campos:
 ---
 
 Responde siempre con profesionalismo, claridad y precisión. Si no tienes suficiente información para completar la acción, pide al usuario los datos necesarios o usa las herramientas para obtenerlos.
-
+MUY IMPORTANTE: NO NECESITAS MAS QUE SOLO LA REFERENCIA, DESCRIPICON Y PRECIO DE UN PRODUCTO PARA CREARLO.
 """
