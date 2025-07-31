@@ -31,64 +31,76 @@ async def call_agent_async(query: str) -> str:
     return "sin respuesta"
 
 async def test_listar_almacenes():
-    response = await call_agent_async("Enséñame todos los almacenes disponibles.")
-    api_response = make_fs_request("GET", "/almacenes")
+    try:
+        response = await call_agent_async("Enséñame todos los almacenes disponibles.")
+        api_response = make_fs_request("GET", "/almacenes")
 
-    if api_response["status"] != "success":
-        print("❌ test_listar_almacenes: ERROR API")
-        return
+        if api_response["status"] != "success":
+            print("❌ test_listar_almacenes: ERROR API")
+            return
 
-    almacenes = api_response["data"]
-    if almacenes and any(str(a["codalmacen"]).lower() in response for a in almacenes):
-        print("✅ test_listar_almacenes: PASA")
-    else:
+        almacenes = api_response["data"]
+        if almacenes and any(str(a["codalmacen"]).lower() in response for a in almacenes):
+            print("✅ test_listar_almacenes: PASA")
+        else:
+            print("❌ test_listar_almacenes: FALLA")
+    except:
         print("❌ test_listar_almacenes: FALLA")
 
 async def test_crear_almacen():
-    cod = "ZZZZ"
-    make_fs_request("DELETE", f"/almacenes/{cod}")  # Asegura limpieza previa
+    try:
+        cod = "ZZZZ"
+        make_fs_request("DELETE", f"/almacenes/{cod}")  # Asegura limpieza previa
 
-    query = (
-        f"Crea un almacén nuevo con código {cod}, nombre TestAlmacen, dirección Calle Falsa 123, "
-        "ciudad PruebaCity, provincia Ejemplo, código postal 12345, país ES, teléfono 600123123, "
-        "idempresa 1 y apartado AL01"
-    )
-    await call_agent_async(query)
+        query = (
+            f"Crea un almacén nuevo con código {cod}, nombre TestAlmacen, dirección Calle Falsa 123, "
+            "ciudad PruebaCity, provincia Ejemplo, código postal 12345, país ES, teléfono 600123123, "
+            "idempresa 1 y apartado AL01"
+        )
+        response = await call_agent_async(query)
 
-    consulta = make_fs_request("GET", "/almacenes")
-    almacenes = consulta.get("data", [])
+        consulta = make_fs_request("GET", "/almacenes")
+        almacenes = consulta.get("data", [])
 
-    if any(a["codalmacen"] == cod for a in almacenes):
-        print("✅ test_crear_almacen: PASA")
-    else:
+        if any(a["codalmacen"] == cod for a in almacenes):
+            print("✅ test_crear_almacen: PASA")
+        else:
+            print("❌ test_crear_almacen: FALLA")
+    except:
         print("❌ test_crear_almacen: FALLA")
 
 async def test_actualizar_almacen():
-    cod = "ZZZZ"
-    nuevo_nombre = "AlmacenActualizado"
+    try:
+        cod = "ZZZZ"
+        nuevo_nombre = "AlmacenActualizado"
 
-    query = f"Cambia el nombre del almacén con código {cod} a {nuevo_nombre}"
-    await call_agent_async(query)
+        query = f"Cambia el nombre del almacén con código {cod} a {nuevo_nombre}"
+        response = await call_agent_async(query)
 
-    consulta = make_fs_request("GET", "/almacenes")
-    almacenes = consulta.get("data", [])
+        consulta = make_fs_request("GET", "/almacenes")
+        almacenes = consulta.get("data", [])
 
-    if any(a["codalmacen"] == cod and a["nombre"] == nuevo_nombre for a in almacenes):
-        print("✅ test_actualizar_almacen: PASA")
-    else:
+        if any(a["codalmacen"] == cod and a["nombre"] == nuevo_nombre for a in almacenes):
+            print("✅ test_actualizar_almacen: PASA")
+        else:
+            print("❌ test_actualizar_almacen: FALLA")
+    except:
         print("❌ test_actualizar_almacen: FALLA")
 
 async def test_eliminar_almacen():
-    cod = "ZZZZ"
-    query = f"Elimina el almacén con código {cod}, si existe"
-    await call_agent_async(query)
+    try:
+        cod = "ZZZZ"
+        query = f"Elimina el almacén con código {cod}, si existe"
+        response = await call_agent_async(query)
 
-    consulta = make_fs_request("GET", "/almacenes")
-    almacenes = consulta.get("data", [])
+        consulta = make_fs_request("GET", "/almacenes")
+        almacenes = consulta.get("data", [])
 
-    if not any(a["codalmacen"] == cod for a in almacenes):
-        print("✅ test_eliminar_almacen: PASA")
-    else:
+        if not any(a["codalmacen"] == cod for a in almacenes):
+            print("✅ test_eliminar_almacen: PASA")
+        else:
+            print("❌ test_eliminar_almacen: FALLA")
+    except:
         print("❌ test_eliminar_almacen: FALLA")
 
 async def main():
