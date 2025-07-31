@@ -22,25 +22,25 @@ def list_families(tool_context):
             "message_for_user": f"Ocurrió un error al listar familias: {str(e)}"
         }
 
-def create_family(tool_context, codigo: str, descripcion: str, **kwargs):
-    logger.info(f"TOOL EXECUTED: create_family(codigo='{codigo}', descripcion='{descripcion}')")
+def create_family(tool_context, descripcion: str, **kwargs):
+    logger.info(f"TOOL EXECUTED: descripcion='{descripcion}')")
 
-    if not codigo or not descripcion:
+    if not descripcion:
         return {
             "status": "error",
             "message": "Código y descripción son obligatorios.",
             "message_for_user": "Debes indicar el código y la descripción de la familia."
         }
 
-    data = {"codigo": codigo, "descripcion": descripcion}
+    data = {"descripcion": descripcion}
     data.update(kwargs)
 
     try:
         response = make_fs_request("POST", "/familias", data=data)
         if response.get("status") == "success":
-            response.setdefault("message_for_user", f"Familia '{codigo}' creada correctamente.")
+            response.setdefault("message_for_user", f"Familia creada correctamente.")
         else:
-            response.setdefault("message_for_user", f"No se pudo crear la familia '{codigo}'.")
+            response.setdefault("message_for_user", f"No se pudo crear la familia.")
         return response
     except Exception as e:
         logger.error(f"Error en create_family: {e}", exc_info=True)
