@@ -55,6 +55,8 @@ async def test_crear_fabricante():
         consulta = make_fs_request("GET", "/fabricantes")
         fabricantes = consulta.get("data", [])
 
+        print(response)
+
         if any(f["nombre"] == "MMMM" for f in fabricantes):
             print("✅ test_crear_fabricante: PASA")
         else:
@@ -68,6 +70,8 @@ async def test_actualizar_fabricante():
         response = await call_agent_async("Actualiza el nombre del fabricante MMMM a WWWW, no crees uno nuevo")
         consulta = make_fs_request("GET", "/fabricantes")
         fabricantes = consulta.get("data", [])
+
+        print(response)
 
         if any(f["nombre"].lower() == "wwww" for f in fabricantes):
             print("✅ test_actualizar_fabricante: PASA")
