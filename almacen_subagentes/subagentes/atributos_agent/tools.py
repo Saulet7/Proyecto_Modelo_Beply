@@ -8,12 +8,11 @@ def list_attributes(tool_context, **filters):
     logger.info(f"TOOL EXECUTED: list_attributes(filters={filters})")
 
     try:
-        # Extraer filtros especiales para relaciones atributo-producto
-        valor = filters.pop("valor", None)
         codproducto = filters.pop("codproducto", None)
         idproducto = filters.pop("idproducto", None)
+        valor = filters.pop("valor", None)
 
-        # 1. Obtener lista de atributos (filtrar solo por atributos propios)
+        # 1. Obtener atributos
         atributos_result = make_fs_request("GET", "/atributos", params=filters)
         if atributos_result.get("status") != "success":
             return {
@@ -21,87 +20,87 @@ def list_attributes(tool_context, **filters):
                 "message": "No se pudo obtener la lista de atributos.",
                 "message_for_user": "No se pudo obtener la lista de atributos."
             }
-
         atributos = atributos_result.get("data", [])
 
-        # 2. Obtener relaciones atributo-producto
-        # Si hay filtros de producto, aplicarlos directamente en la consulta si la API lo soporta
-        relaciones_params = {}
-        if codproducto:
-            relaciones_params["codproducto"] = codproducto
-        if idproducto:
-            relaciones_params["idproducto"] = idproducto
-        if valor:
-            relaciones_params["valor"] = valor
-
-        relaciones_result = make_fs_request("GET", "/atributovalores", params=relaciones_params)
-        if relaciones_result.get("status") != "success":
+        # 2. Obtener todos los atributovalores
+        valores_result = make_fs_request("GET", "/atributovalores")
+        if valores_result.get("status") != "success":
             return {
                 "status": "error",
-                "message": "No se pudieron obtener las asignaciones de atributos.",
-                "message_for_user": "No se pudieron obtener las asignaciones de atributos a productos."
+                "message": "No se pudieron obtener los valores de atributos.",
+                "message_for_user": "No se pudieron obtener los valores de atributos."
             }
+        atributovalores = valores_result.get("data", [])
+        valores_por_id = {v["id"]: v for v in atributovalores}
 
-        relaciones = relaciones_result.get("data", [])
+        # 3. Obtener variantes del producto
+        variantes_params = {}
+        if codproducto or idproducto:
+            productos_result = make_fs_request("GET", "/productos", params={"codproducto": codproducto, "idproducto": idproducto})
+            if productos_result.get("status") != "success" or not productos_result.get("data"):
+                return {
+                    "status": "error",
+                    "message": "No se encontró el producto.",
+                    "message_for_user": "No se encontró el producto."
+                }
+            idproducto = productos_result["data"][0]["idproducto"]
+            variantes_params["idproducto"] = idproducto
 
-        # 3. Si no se pudieron aplicar filtros en la API, filtrar manualmente
-        if not relaciones_params:  # Solo si no se aplicaron filtros en la consulta
-            relaciones_filtradas = []
-            for r in relaciones:
-                if (not valor or r.get("valor") == valor) and \
-                   (not codproducto or r.get("codproducto") == codproducto) and \
-                   (not idproducto or r.get("idproducto") == int(idproducto) if idproducto else True):
-                    relaciones_filtradas.append(r)
-        else:
-            relaciones_filtradas = relaciones
+        variantes_result = make_fs_request("GET", "/variantes", params=variantes_params)
+        if variantes_result.get("status") != "success":
+            return {
+                "status": "error",
+                "message": "No se pudieron obtener las variantes.",
+                "message_for_user": "No se pudieron obtener las variantes del producto."
+            }
+        variantes = variantes_result.get("data", [])
 
-        # 4. Crear diccionario de asignaciones por codatributo
+        # 4. Relacionar atributos con variantes
         from collections import defaultdict
         asignaciones_por_atributo = defaultdict(list)
-        
-        for relacion in relaciones_filtradas:
-            codatributo = relacion.get("codatributo")
-            if codatributo:
+        for variante in variantes:
+            for i in range(1, 5):
+                valor_id = variante.get(f"idatributovalor{i}")
+                if not valor_id:
+                    continue
+                valor_info = valores_por_id.get(valor_id)
+                if not valor_info:
+                    continue
+                if valor and valor_info.get("valor") != valor:
+                    continue  # filtrar por valor si se especificó
+
+                codatributo = valor_info.get("codatributo")
                 asignaciones_por_atributo[codatributo].append({
-                    "codproducto": relacion.get("codproducto"),
-                    "idproducto": relacion.get("idproducto"),
-                    "valor": relacion.get("valor")
+                    "idvariante": variante.get("idvariante"),
+                    "idproducto": variante.get("idproducto"),
+                    "valor": valor_info.get("valor"),
+                    "idatributovalor": valor_id
                 })
 
-        # 5. Enriquecer atributos con sus asignaciones
+        # 5. Enriquecer atributos
         atributos_enriquecidos = []
-        
         for atributo in atributos:
             codatributo = atributo.get("codatributo")
             asignaciones = asignaciones_por_atributo.get(codatributo, [])
-            
-            # Agregar asignaciones al atributo
             atributo_copia = atributo.copy()
             atributo_copia["asignaciones"] = asignaciones
-            
-            # Decidir si incluir el atributo basado en los filtros
-            incluir_atributo = True
-            
-            # Si hay filtros de relación (valor, codproducto, idproducto)
             if valor or codproducto or idproducto:
-                # Solo incluir si tiene asignaciones que coincidan con los filtros
-                incluir_atributo = len(asignaciones) > 0
-            
-            if incluir_atributo:
+                if asignaciones:
+                    atributos_enriquecidos.append(atributo_copia)
+            else:
                 atributos_enriquecidos.append(atributo_copia)
 
-        # 6. Mensaje personalizado según el contexto
+        mensaje_usuario = f"Se encontraron {len(atributos_enriquecidos)} atributos"
         if codproducto:
-            mensaje_usuario = f"Se encontraron {len(atributos_enriquecidos)} atributos asignados al producto '{codproducto}'."
+            mensaje_usuario += f" asignados al producto '{codproducto}'"
         elif valor:
-            mensaje_usuario = f"Se encontraron {len(atributos_enriquecidos)} atributos con valor '{valor}'."
-        else:
-            mensaje_usuario = f"Se encontraron {len(atributos_enriquecidos)} atributos."
+            mensaje_usuario += f" con valor '{valor}'"
+        mensaje_usuario += "."
 
         return {
             "status": "success",
             "data": atributos_enriquecidos,
-            "message": f"Se procesaron {len(atributos)} atributos y se encontraron {len(atributos_enriquecidos)} que coinciden con los filtros.",
+            "message": "Atributos procesados correctamente.",
             "message_for_user": mensaje_usuario
         }
 
@@ -166,39 +165,76 @@ def delete_attribute(tool_context, attribute_id: str):
             "message_for_user": f"Ocurrió un error al eliminar el atributo: {str(e)}"
         }
 
-def assign_attribute_to_product(tool_context, codproducto: str, codatributo: str, valor: str):
-    logger.info(f"TOOL EXECUTED: assign_attribute_to_product(codproducto='{codproducto}', codatributo='{codatributo}', valor='{valor}')")
-    
-    if not codproducto or not codatributo:
-        return {
-            "status": "error",
-            "message": "Faltan datos obligatorios (codproducto, codatributo).",
-            "message_for_user": "Debes indicar el código del producto y el del atributo."
-        }
-
-    form_data = {
-        "codproducto": str(codproducto),
-        "codatributo": str(codatributo),
-        "valor": valor
-    }
-
-    logger.debug(f"Enviando form_data a /atributovalor: {form_data}")
+def assign_attribute_to_product(tool_context, idvariante: int, codatributo: str, valor: str):
+    logger.info(f"TOOL EXECUTED: assign_attribute_to_product(idvariante={idvariante}, codatributo='{codatributo}', valor='{valor}')")
 
     try:
-        api_result = make_fs_request("POST", "/atributovalores", data=form_data)
-        if api_result.get("status") == "success":
-            api_result.setdefault("message_for_user", f"Atributo '{codatributo}' asignado correctamente al producto '{codproducto}'.")
+        # 1. Buscar el atributovalor que corresponde al codatributo y valor
+        valores_result = make_fs_request("GET", "/atributovalores")
+        if valores_result.get("status") != "success":
+            return {
+                "status": "error",
+                "message": "No se pudieron obtener los valores de atributos.",
+                "message_for_user": "No se pudo encontrar el valor del atributo a asignar."
+            }
+        atributovalores = valores_result.get("data", [])
+        valor_encontrado = next((v for v in atributovalores if v["codatributo"] == codatributo and v["valor"] == valor), None)
+        if not valor_encontrado:
+            return {
+                "status": "error",
+                "message": "Valor de atributo no encontrado.",
+                "message_for_user": "No se encontró el valor indicado para ese atributo."
+            }
+        idatributovalor = valor_encontrado["id"]
+
+        # 2. Obtener la variante a modificar
+        variante_result = make_fs_request("GET", f"/variantes/{idvariante}")
+        if variante_result.get("status") != "success":
+            return {
+                "status": "error",
+                "message": "No se pudo obtener la variante.",
+                "message_for_user": "No se encontró la variante indicada."
+            }
+        variante = variante_result["data"]
+
+        # 3. Asignar al primer campo libre entre idatributovalor1..4
+        for i in range(1, 5):
+            campo = f"idatributovalor{i}"
+            if not variante.get(campo):
+                variante[campo] = idatributovalor
+                break
+            # Si ya está asignado ese codatributo, reemplazar
+            elif valores_result["data"]:
+                val = valores_result["data"]
+                idval_existente = variante.get(campo)
+                if idval_existente:
+                    cod_existente = next((v["codatributo"] for v in val if v["id"] == idval_existente), None)
+                    if cod_existente == codatributo:
+                        variante[campo] = idatributovalor
+                        break
         else:
-            api_result.setdefault("message_for_user", "No se pudo asignar el atributo al producto.")
-        return api_result
+            return {
+                "status": "error",
+                "message": "No hay campo libre para asignar el atributo.",
+                "message_for_user": "No se puede asignar más atributos a esta variante (máximo 4)."
+            }
+
+        # 4. Actualizar la variante
+        update_result = make_fs_request("PUT", f"/variantes/{idvariante}", data=variante)
+        if update_result.get("status") == "success":
+            update_result.setdefault("message_for_user", f"Atributo '{codatributo}' asignado a la variante correctamente.")
+        else:
+            update_result.setdefault("message_for_user", "No se pudo asignar el atributo a la variante.")
+
+        return update_result
+
     except Exception as e:
         logger.error(f"Error en assign_attribute_to_product: {e}", exc_info=True)
         return {
             "status": "error",
             "message": str(e),
-            "message_for_user": f"Ocurrió un error al asignar el atributo al producto: {str(e)}"
+            "message_for_user": f"Ocurrió un error al asignar el atributo a la variante: {str(e)}"
         }
-    
 
 AGENT_TOOLS = [
     list_attributes,
