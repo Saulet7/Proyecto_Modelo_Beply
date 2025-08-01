@@ -1,7 +1,7 @@
 from google.adk.agents import LlmAgent, LoopAgent
 from google.genai.types import GenerateContentConfig
 from almacen_subagentes.prompt import DISPATCHER_INSTRUCTION
-from data import MODEL_GEMINI_2_5_PRO
+from data import MODEL_GEMINI_2_5_FLASH
 from components import ExitLoopSignalTool, ExitConditionChecker
 from components import ExitLoopSignalTool
 
@@ -15,7 +15,7 @@ from .subagentes.srock_agent.agent import StockAgent
 
 AlmacenesAgentCore = LlmAgent(
     name="AlmacenesAgentCore",
-    model=MODEL_GEMINI_2_5_PRO,  # Usamos un modelo más potente para el dispatcher
+    model=MODEL_GEMINI_2_5_FLASH,  # Usamos un modelo más potente para el dispatcher
     description="Agente coordinador que analiza consultas y las deriva al agente especializado adecuado",
     instruction=DISPATCHER_INSTRUCTION,
     generate_content_config=GenerateContentConfig(
