@@ -10,7 +10,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from utils import make_fs_request
-from almacen_subagentes.agent import root_agent
+from almacen_simple.agent import root_agent
 
 load_dotenv()
 
@@ -44,8 +44,9 @@ async def test_listar_productos():
             print("✅ test_listar_productos: PASA")
         else:
             print("❌ test_listar_productos: FALLA")
+            print("Respuesta del agente: ", response)
     except:
-        print("❌ test_listar_productos: FALLA")
+        print("❌ test_listar_productos: EXCEPCION")
 
 async def test_crear_producto():
     try:
@@ -65,8 +66,9 @@ async def test_crear_producto():
             print("✅ test_crear_producto: PASA")
         else:
             print("❌ test_crear_producto: FALLA")
+            print("Respuesta del agente: ", response)
     except:
-        print("❌ test_crear_producto: FALLA")
+        print("❌ test_crear_producto: EXCEPCION")
 
 async def test_actualizar_producto():
     try:
@@ -79,8 +81,9 @@ async def test_actualizar_producto():
             print("✅ test_actualizar_producto: PASA")
         else:
             print("❌ test_actualizar_producto: FALLA")
+            print("Respuesta del agente: ", response)
     except:
-        print("❌ test_actualizar_producto: FALLA")
+        print("❌ test_actualizar_producto: EXCEPCION")
 
 async def test_eliminar_producto():
     try:
@@ -92,8 +95,9 @@ async def test_eliminar_producto():
             print("✅ test_eliminar_producto: PASA")
         else:
             print("❌ test_eliminar_producto: FALLA")
+            print("Respuesta del agente: ", response)
     except:
-        print("❌ test_eliminar_producto: FALLA")
+        print("❌ test_eliminar_producto: EXCECPION")
 
 async def main():
     await session_service.create_session(

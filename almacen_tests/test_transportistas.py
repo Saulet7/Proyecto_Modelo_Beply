@@ -10,7 +10,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from utils import make_fs_request
-from almacen_subagentes.agent import root_agent
+from almacen_simple.agent import root_agent
 
 
 load_dotenv()
@@ -44,8 +44,9 @@ async def test_listar_transportistas():
             print("✅ test_listar_transportistas: PASA")
         else:
             print("❌ test_listar_transportistas: FALLA")
+            print("Respuesta del agente: ", response)
     except:
-        print("❌ test_listar_transportistas: FALLA")
+        print("❌ test_listar_transportistas: EXCEPCION")
 
 async def test_crear_transportista():
     try:
@@ -64,8 +65,9 @@ async def test_crear_transportista():
             print("✅ test_crear_transportista: PASA")
         else:
             print("❌ test_crear_transportista: FALLA")
+            print("Respuesta del agente: ", response)
     except:
-        print("❌ test_crear_transportista: FALLA")
+        print("❌ test_crear_transportista: EXCEPCION")
 
 async def test_actualizar_transportista():
     try:
@@ -84,8 +86,9 @@ async def test_actualizar_transportista():
             print("✅ test_actualizar_transportista: PASA")
         else:
             print("❌ test_actualizar_transportista: FALLA")
+            print("Respuesta del agente: ", response)
     except:
-        print("❌ test_actualizar_transportista: FALLA")
+        print("❌ test_actualizar_transportista: EXCEPCION")
 
 async def test_eliminar_transportista():
     try:
@@ -102,8 +105,9 @@ async def test_eliminar_transportista():
             print("✅ test_eliminar_transportista: PASA")
         else:
             print("❌ test_eliminar_transportista: FALLA")
+            print("Respuesta del agente: ", response)
     except:
-        print("❌ test_eliminar_transportista: FALLA")
+        print("❌ test_eliminar_transportista: EXCEPCION")
 
 async def main():
     await session_service.create_session(

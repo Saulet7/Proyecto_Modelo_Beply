@@ -10,7 +10,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from utils import make_fs_request
-from almacen_subagentes.agent import root_agent
+from almacen_simple.agent import root_agent
 
 load_dotenv()
 
@@ -44,8 +44,9 @@ async def test_listar_familias():
             print("✅ test_listar_familias: PASA")
         else:
             print("❌ test_listar_familias: FALLA")
+            print("Respuesta del agente: ", response)
     except:
-        print("❌ test_listar_familias: FALLA")
+        print("❌ test_listar_familias: EXCEPCION")
 
 async def test_crear_familia():
     try:
@@ -59,8 +60,9 @@ async def test_crear_familia():
             print("✅ test_crear_familia: PASA")
         else:
             print("❌ test_crear_familia: FALLA")
+            print("Respuesta del agente: ", response)
     except:
-        print("❌ test_crear_familia: FALLA")
+        print("❌ test_crear_familia: EXCEPCION")
 
 async def test_actualizar_familia():
     try:
@@ -73,8 +75,9 @@ async def test_actualizar_familia():
             print("✅ test_actualizar_familia: PASA")
         else:
             print("❌ test_actualizar_familia: FALLA")
+            print("Respuesta del agente: ", response)
     except:
-        print("❌ test_actualizar_familia: FALLA")
+        print("❌ test_actualizar_familia: EXCEPCION")
 
 async def test_eliminar_familia():
     try:
@@ -86,8 +89,9 @@ async def test_eliminar_familia():
             print("✅ test_eliminar_familia: PASA")
         else:
             print("❌ test_eliminar_familia: FALLA")
+            print("Respuesta del agente: ", response)
     except:
-        print("❌ test_eliminar_familia: FALLA")
+        print("❌ test_eliminar_familia: EXCEPCION")
 
 async def main():
     await session_service.create_session(

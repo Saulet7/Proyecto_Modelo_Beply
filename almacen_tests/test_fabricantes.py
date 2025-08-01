@@ -10,7 +10,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from utils import make_fs_request
-from almacen_subagentes.agent import root_agent
+from almacen_simple.agent import root_agent
 
 load_dotenv()
 
@@ -44,8 +44,9 @@ async def test_listar_fabricantes():
             print("✅ test_listar_fabricantes: PASA")
         else:
             print("❌ test_listar_fabricantes: FALLA")
+            print("Respuesta del agente: ", response)
     except:
-        print("❌ test_listar_fabricantes: FALLA")
+        print("❌ test_listar_fabricantes: EXCEPCION")
 
 async def test_crear_fabricante():
     try:
@@ -61,8 +62,9 @@ async def test_crear_fabricante():
             print("✅ test_crear_fabricante: PASA")
         else:
             print("❌ test_crear_fabricante: FALLA")
+            print("Respuesta del agente: ", response)
     except:
-        print("❌ test_crear_fabricante: FALLA")
+        print("❌ test_crear_fabricante: EXCEPCION")
 
 async def test_actualizar_fabricante():
     try:
@@ -77,8 +79,9 @@ async def test_actualizar_fabricante():
             print("✅ test_actualizar_fabricante: PASA")
         else:
             print("❌ test_actualizar_fabricante: FALLA")
+            print("Respuesta del agente: ", response)
     except:
-        print("❌ test_actualizar_fabricante: FALLA")
+        print("❌ test_actualizar_fabricante: EXCEPCION")
 
 async def test_eliminar_fabricante():
     try:
@@ -94,8 +97,9 @@ async def test_eliminar_fabricante():
             print("✅ test_eliminar_fabricante: PASA")
         else:
             print("❌ test_eliminar_fabricante: FALLA")
+            print("Respuesta del agente: ", response)
     except:
-        print("❌ test_eliminar_fabricante: FALLA")
+        print("❌ test_eliminar_fabricante: EXCEPCION")
 
 async def main():
     await session_service.create_session(
