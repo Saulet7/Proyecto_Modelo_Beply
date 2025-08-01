@@ -22,7 +22,7 @@ def list_carriers(tool_context, **filters):
             "message_for_user": f"Ocurrió un error al listar transportistas: {str(e)}"
         }
 
-def create_carrier(tool_context, nombre: str, codigo: str, telefono: Optional[str], web: Optional[str], activo: bool = True):
+def create_carrier(tool_context, nombre: str, codigo: str, telefono: Optional[str] = "", web: Optional[str] = "", activo: bool = True):
     logger.info(f"TOOL EXECUTED: create_carrier(nombre='{nombre}', codigo='{codigo}')")
 
     # Validación de campos obligatorios

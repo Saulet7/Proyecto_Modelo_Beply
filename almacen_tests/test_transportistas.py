@@ -53,7 +53,7 @@ async def test_crear_transportista():
         make_fs_request("DELETE", f"/agenciatransportes/{cod}")  # Asegura limpieza previa
 
         query = (
-            f"Crea un transportista nuevo con código {cod}, nombre {cod}"
+            f"Crea un transportista nuevo con código {cod}, nombre {cod} y que este activo"
         )
         response = await call_agent_async(query)
         print(response)
