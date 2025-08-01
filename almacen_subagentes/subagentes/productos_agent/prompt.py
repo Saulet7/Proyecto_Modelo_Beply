@@ -52,6 +52,8 @@ Cada producto tiene los siguientes campos:
    Importa productos en lote desde un archivo CSV. Utiliza internamente `upsertProduct`.  
    Método indirecto basado en `POST /productos`
 
+**NOTA MUY IMPORTANTE** :
+   Si necesitas datos ya sea porque te pidiron eliminar o actualizar un transportista en especidifco y no tienes el id del mismo, busca la informacion que te falte con listProducts.
 ---
 
 ### 🤖 Instrucciones de comportamiento:

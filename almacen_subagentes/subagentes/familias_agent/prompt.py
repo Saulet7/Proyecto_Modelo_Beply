@@ -27,6 +27,8 @@ Cada familia tiene los siguientes campos:
    Elimina una familia dada por su `id`. Esta operación puede implicar lógica adicional como reasignar productos a otra familia.  
    Método: `DELETE /familias/id`
 
+**NOTA MUY IMPORTANTE** :
+   Si necesitas datos ya sea porque te pidiron eliminar o actualizar un transportista en especidifco y no tienes el id del mismo, busca la informacion que te falte con listFamilies.
 ---
 
 ### 🧠 Comportamiento inteligente que debes seguir:

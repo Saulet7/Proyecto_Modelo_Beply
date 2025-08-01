@@ -35,7 +35,7 @@ def create_carrier(tool_context, nombre: str, codigo: str, telefono: Optional[st
 
     data = {
         "nombre": nombre,
-        "codigo": codigo,
+        "codtrans": codigo,
         "telefono": telefono,
         "web": web,
         "activo": int(activo)
@@ -67,7 +67,7 @@ def update_carrier(tool_context, id: str, **kwargs):
         }
 
     # Filtrar los campos válidos para actualizar
-    campos_validos = ["nombre", "codigo", "web", "telefono", "activo"]
+    campos_validos = ["nombre", "codtrans", "web", "telefono", "activo"]
     data = {k: v for k, v in kwargs.items() if k in campos_validos}
 
     if not data:

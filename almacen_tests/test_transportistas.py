@@ -53,10 +53,9 @@ async def test_crear_transportista():
         make_fs_request("DELETE", f"/agenciatransportes/{cod}")  # Asegura limpieza previa
 
         query = (
-            f"Crea un transportista nuevo con código {cod}, nombre {cod} y que este activo"
+            f"Crea un transportista nuevo con código {cod}, nombre {cod}, que este activo con numero de telefono +34 666 666 666 y dirección web http://yatusabe.com"
         )
         response = await call_agent_async(query)
-        print(response)
 
         consulta = make_fs_request("GET", "/agenciatransportes")
         transportistas = consulta.get("data", [])
@@ -76,6 +75,8 @@ async def test_actualizar_transportista():
         query = f"Cambia el nombre del transportista con código {cod} a {nuevo_nombre}"
         response = await call_agent_async(query)
 
+        print(response)
+
         consulta = make_fs_request("GET", "/agenciatransportes")
         transportistas = consulta.get("data", [])
 
@@ -91,6 +92,8 @@ async def test_eliminar_transportista():
         cod = "ZZZZ"
         query = f"Elimina el transportista con código {cod}, si existe"
         response = await call_agent_async(query)
+
+        print(response)
 
         consulta = make_fs_request("GET", "/agenciatransportes")
         transportistas = consulta.get("data", [])

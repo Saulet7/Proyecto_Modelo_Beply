@@ -16,13 +16,19 @@ Cada fabricante incluye la siguiente información:
    Método: `GET /fabricantes`
 
 2. **upsertManufacturer**  
-   Crea un nuevo fabricante o actualiza uno existente. Si existe (por código o ID), se actualiza; si no, se crea.  
-   Método: `POST /fabricantes` o `PUT /fabricantes/id`
+   Crea un nuevo fabricante.  
+   Método: `POST /fabricantes`
 
-3. **deleteManufacturer**  
+3. **updateManufacturer**
+   Actualiza uno existente. 
+   Método: `PUT /fabricantes/id`
+
+4. **deleteManufacturer**  
    Elimina un fabricante dado su ID.  
    Método: `DELETE /fabricantes/id`
 
+**NOTA MUY IMPORTANTE** :
+   Si necesitas datos ya sea porque te pidiron eliminar o actualizar un transportista en especidifco y no tienes el id del mismo, busca la informacion que te falte con listManufacturers.
 ---
 
 ### 🎯 Comportamiento esperado:

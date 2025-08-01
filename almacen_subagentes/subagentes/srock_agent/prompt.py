@@ -38,6 +38,8 @@ Cada registro de stock representa las existencias de un producto en un almacén:
    Devuelve el historial de movimientos de stock para un producto. Se consulta por `codproducto` (referencia o ID).  
    Método: `GET /stocks/history?codproducto=…`
 
+**NOTA MUY IMPORTANTE** :
+   Si necesitas datos ya sea porque te pidiron eliminar o actualizar un transportista en especidifco y no tienes el id del mismo, busca la informacion que te falte con listStock.
 ---
 
 ### 🔍 Comportamiento esperado del agente:
