@@ -44,7 +44,7 @@ async def test_listar_productos():
             print("✅ test_listar_productos: PASA")
         else:
             print("❌ test_listar_productos: FALLA")
-            print("Respuesta del agente: ", response)
+            print(f"\033[91mRespuesta del agente: {response}\033[0m")
     except:
         print("❌ test_listar_productos: EXCEPCION")
 
@@ -66,7 +66,7 @@ async def test_crear_producto():
             print("✅ test_crear_producto: PASA")
         else:
             print("❌ test_crear_producto: FALLA")
-            print("Respuesta del agente: ", response)
+            print(f"\033[91mRespuesta del agente: {response}\033[0m")
     except:
         print("❌ test_crear_producto: EXCEPCION")
 
@@ -81,7 +81,7 @@ async def test_actualizar_producto():
             print("✅ test_actualizar_producto: PASA")
         else:
             print("❌ test_actualizar_producto: FALLA")
-            print("Respuesta del agente: ", response)
+            print(f"\033[91mRespuesta del agente: {response}\033[0m")
     except:
         print("❌ test_actualizar_producto: EXCEPCION")
 
@@ -95,7 +95,7 @@ async def test_eliminar_producto():
             print("✅ test_eliminar_producto: PASA")
         else:
             print("❌ test_eliminar_producto: FALLA")
-            print("Respuesta del agente: ", response)
+            print(f"\033[91mRespuesta del agente: {response}\033[0m")
     except:
         print("❌ test_eliminar_producto: EXCECPION")
 

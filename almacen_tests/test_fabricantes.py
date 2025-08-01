@@ -44,7 +44,7 @@ async def test_listar_fabricantes():
             print("✅ test_listar_fabricantes: PASA")
         else:
             print("❌ test_listar_fabricantes: FALLA")
-            print("Respuesta del agente: ", response)
+            print(f"\033[91mRespuesta del agente: {response}\033[0m")
     except:
         print("❌ test_listar_fabricantes: EXCEPCION")
 
@@ -62,7 +62,7 @@ async def test_crear_fabricante():
             print("✅ test_crear_fabricante: PASA")
         else:
             print("❌ test_crear_fabricante: FALLA")
-            print("Respuesta del agente: ", response)
+            print(f"\033[91mRespuesta del agente: {response}\033[0m")
     except:
         print("❌ test_crear_fabricante: EXCEPCION")
 
@@ -79,7 +79,7 @@ async def test_actualizar_fabricante():
             print("✅ test_actualizar_fabricante: PASA")
         else:
             print("❌ test_actualizar_fabricante: FALLA")
-            print("Respuesta del agente: ", response)
+            print(f"\033[91mRespuesta del agente: {response}\033[0m")
     except:
         print("❌ test_actualizar_fabricante: EXCEPCION")
 
@@ -97,7 +97,7 @@ async def test_eliminar_fabricante():
             print("✅ test_eliminar_fabricante: PASA")
         else:
             print("❌ test_eliminar_fabricante: FALLA")
-            print("Respuesta del agente: ", response)
+            print(f"\033[91mRespuesta del agente: {response}\033[0m")
     except:
         print("❌ test_eliminar_fabricante: EXCEPCION")
 

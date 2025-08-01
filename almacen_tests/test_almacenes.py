@@ -44,7 +44,7 @@ async def test_listar_almacenes():
             print("✅ test_listar_almacenes: PASA")
         else:
             print("❌ test_listar_almacenes: FALLA")
-            print("Respuesta del agente: ", response)
+            print(f"\033[91mRespuesta del agente: {response}\033[0m")
     except:
         print("❌ test_listar_almacenes: EXCEPCION")
 
@@ -67,7 +67,7 @@ async def test_crear_almacen():
             print("✅ test_crear_almacen: PASA")
         else:
             print("❌ test_crear_almacen: FALLA")
-            print("Respuesta del agente: ", response)
+            print(f"\033[91mRespuesta del agente: {response}\033[0m")
     except:
         print("❌ test_crear_almacen: EXCEPCION")
 
@@ -86,7 +86,7 @@ async def test_actualizar_almacen():
             print("✅ test_actualizar_almacen: PASA")
         else:
             print("❌ test_actualizar_almacen: FALLA")
-            print("Respuesta del agente: ", response)
+            print(f"\033[91mRespuesta del agente: {response}\033[0m")
     except:
         print("❌ test_actualizar_almacen: EXCEPCION")
 
@@ -103,7 +103,7 @@ async def test_eliminar_almacen():
             print("✅ test_eliminar_almacen: PASA")
         else:
             print("❌ test_eliminar_almacen: FALLA")
-            print("Respuesta del agente: ", response)
+            print(f"\033[91mRespuesta del agente: {response}\033[0m")
     except:
         print("❌ test_eliminar_almacen: EXCEPCION")
 

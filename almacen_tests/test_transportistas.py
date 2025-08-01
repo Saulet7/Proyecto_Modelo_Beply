@@ -44,7 +44,7 @@ async def test_listar_transportistas():
             print("✅ test_listar_transportistas: PASA")
         else:
             print("❌ test_listar_transportistas: FALLA")
-            print("Respuesta del agente: ", response)
+            print(f"\033[91mRespuesta del agente: {response}\033[0m")
     except:
         print("❌ test_listar_transportistas: EXCEPCION")
 
@@ -65,7 +65,7 @@ async def test_crear_transportista():
             print("✅ test_crear_transportista: PASA")
         else:
             print("❌ test_crear_transportista: FALLA")
-            print("Respuesta del agente: ", response)
+            print(f"\033[91mRespuesta del agente: {response}\033[0m")
     except:
         print("❌ test_crear_transportista: EXCEPCION")
 
@@ -86,7 +86,7 @@ async def test_actualizar_transportista():
             print("✅ test_actualizar_transportista: PASA")
         else:
             print("❌ test_actualizar_transportista: FALLA")
-            print("Respuesta del agente: ", response)
+            print(f"\033[91mRespuesta del agente: {response}\033[0m")
     except:
         print("❌ test_actualizar_transportista: EXCEPCION")
 
@@ -105,7 +105,7 @@ async def test_eliminar_transportista():
             print("✅ test_eliminar_transportista: PASA")
         else:
             print("❌ test_eliminar_transportista: FALLA")
-            print("Respuesta del agente: ", response)
+            print(f"\033[91mRespuesta del agente: {response}\033[0m")
     except:
         print("❌ test_eliminar_transportista: EXCEPCION")
 

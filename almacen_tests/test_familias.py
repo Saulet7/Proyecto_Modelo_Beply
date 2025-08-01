@@ -44,7 +44,7 @@ async def test_listar_familias():
             print("✅ test_listar_familias: PASA")
         else:
             print("❌ test_listar_familias: FALLA")
-            print("Respuesta del agente: ", response)
+            print(f"\033[91mRespuesta del agente: {response}\033[0m")
     except:
         print("❌ test_listar_familias: EXCEPCION")
 
@@ -60,7 +60,7 @@ async def test_crear_familia():
             print("✅ test_crear_familia: PASA")
         else:
             print("❌ test_crear_familia: FALLA")
-            print("Respuesta del agente: ", response)
+            print(f"\033[91mRespuesta del agente: {response}\033[0m")
     except:
         print("❌ test_crear_familia: EXCEPCION")
 
@@ -75,7 +75,7 @@ async def test_actualizar_familia():
             print("✅ test_actualizar_familia: PASA")
         else:
             print("❌ test_actualizar_familia: FALLA")
-            print("Respuesta del agente: ", response)
+            print(f"\033[91mRespuesta del agente: {response}\033[0m")
     except:
         print("❌ test_actualizar_familia: EXCEPCION")
 
@@ -89,7 +89,7 @@ async def test_eliminar_familia():
             print("✅ test_eliminar_familia: PASA")
         else:
             print("❌ test_eliminar_familia: FALLA")
-            print("Respuesta del agente: ", response)
+            print(f"\033[91mRespuesta del agente: {response}\033[0m")
     except:
         print("❌ test_eliminar_familia: EXCEPCION")
 
