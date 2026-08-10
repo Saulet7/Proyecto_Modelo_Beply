@@ -1,4 +1,4 @@
-Multi-Agent Enterprise ERP Assistant
+# Multi-Agent Enterprise ERP Assistant
 
 A modular system based on a multi-agent architecture with Large Language Models (LLMs), designed to automate and manage complex operations within an Enterprise Resource Planning (ERP) system.
 
@@ -48,106 +48,55 @@ Each ERP domain has a dedicated agent with its own prompting logic, context, and
 
 ## Project Structure
 
-.
-├── api.py                   # API entry point & endpoints
-├── main.py                  # Core system entry point
-├── config.py                # Environment & global settings
-├── components.py            # Reusable UI & shared logic components
-├── data.py                  # Mock database & persistence layer
-├── utils.py                 # Utility & helper functions
-│
-├── dispatcher/              # Central Orchestrator Agent
-│   ├── agent.py             # Dispatcher routing logic
-│   ├── prompt.py            # Intent classification prompts
-│   └── tools.py             # Delegation tools
-│
-├── cliente/                 # Customer Management Agent
-├── producto/                # Product Management Agent
-├── creador_factura/         # Invoice Generation Agent
-├── linea_factura/           # Invoice Line Items Agent
-├── presupuesto/             # Commercial Quotes Agent
-├── stock/                   # Inventory & Warehouse Agent
-├── proveedor/               # Supplier Management Agent
-├── fabricante/              # Manufacturer Metadata Agent
-├── familia/                 # Product Category Agent
-└── reduced_loop/            # High-speed inference sub-loopMulti-Agent Enterprise ERP Assistant
+* **Core Scripts**: `main.py` (system entry point), `api.py` (API integration), `config.py` (global settings), `data.py` (mock database), `components.py`, and `utils.py`.
+* **Central Orchestration**: `dispatcher/` containing the routing agent logic, tools, and prompts.
+* **Specialized Sub-Agents**: Separate domain modules for `cliente`, `producto`, `creador_factura`, `linea_factura`, `presupuesto`, `stock`, `proveedor`, `fabricante`, and `familia`.
+* **Execution Optimization**: `reduced_loop/` for fast-path, low-latency inference queries.
 
-A modular system based on a multi-agent architecture with Large Language Models (LLMs), designed to automate and manage complex operations within an Enterprise Resource Planning (ERP) system.
+---
 
-The project implements a central orchestrator (Dispatcher) that classifies natural language requests and delegates task execution to specialized agents equipped with domain-specific tools (function calling).
-System Architecture
+## Tech Stack and Key Concepts
 
-The system utilizes a Router/Dispatcher + Specialized Sub-Agents pattern, ensuring context isolation, high scalability, and precise tool call management.
+* **Language**: Python 3.10+
+* **Design Patterns**: Multi-Agent System (MAS), Function Calling / Tool Use, Modular Prompt Engineering.
+* **API Integration**: Endpoints for asynchronous communication and external orchestration.
 
-                      +----------------------+
-                      |      User Input      |
-                      +----------+-----------+
-                                 |
-                                 v
-                     +------------------------+
-                     |    Dispatcher Agent    |
-                     |  (Central Orchestrator)|
-                     +-----------+------------+
-                                 |
-    +--------------+-------------+--------------+--------------+
-    |              |             |              |              |
-    v              v             v              v              v
-+--------+    +---------+   +---------+   +----------+   +-----------+
-| Client |    | Product |   | Invoice |   |  Stock   |   | Suppliers | ...
-| Agent  |    | Agent   |   | Agent   |   |  Agent   |   |   Agent   |
-+--------+    +---------+   +---------+   +----------+   +-----------+
+---
 
-Modules and Specialized Agents
+## Installation and Setup
 
-Each ERP domain has a dedicated agent with its own prompting logic, context, and set of tools:
+### 1. Clone the repository
+```bash
+git clone [https://github.com/your-username/your-repo-name.git](https://github.com/your-username/your-repo-name.git)
+cd your-repo-name
 
-    Dispatcher (dispatcher/): Evaluates incoming prompts, determines user intent, and routes execution to the appropriate domain agent.
+2. Create a virtual environment and install dependencies
+Bash
 
-    Customer Management (cliente/): Search, creation, and querying of customer records.
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
 
-    Product and Category Management (producto/, familia/, fabricante/): Catalog management, hierarchical categorization, and manufacturer metadata.
+3. Configure environment variables
 
-    Invoicing and Invoice Items (creador_factura/, linea_factura/): Invoice generation, amount calculations, line item breakdown, and tax association.
+Create a .env file in the root directory containing the required keys:
+Fragmento de código
 
-    Quotes and Estimates (presupuesto/): Drafting and tracking of commercial offers and proposals.
+API_KEY=your_api_key_here
+ENVIRONMENT=development
 
-    Stock and Warehouse Control (stock/): Inventory lookup, movement traceability, and restocking operations.
+4. Running the application
 
-    Supplier Management (proveedor/): Administration of vendor profiles and purchase orders.
+To start the agent system via the main entry point:
+Bash
 
-    Reduced Loop (reduced_loop/): An optimized sub-loop tailored for fast interactions and low-latency queries.
+python main.py
 
-Project Structure
-Plaintext
+To run the API service:
+Bash
 
-.
-├── api.py               # Entry point / API interface
-├── main.py              # Main application execution
-├── config.py            # Global configuration and environment variables
-├── components.py        # Reusable UI components / Shared logic
-├── data.py              # Data layer / Mock Database
-├── utils.py             # Utility functions
-│
-├── dispatcher/          # Central Orchestrator Agent
-│   ├── agent.py
-│   ├── prompt.py
-│   └── tools.py
-│
-├── cliente/             # Customer Management Agent
-├── producto/            # Product Management Agent
-├── creador_factura/     # Invoice Generator Agent
-├── linea_factura/       # Invoice Line Items Agent
-├── presupuesto/         # Quotes & Estimates Agent
-├── stock/               # Inventory & Warehouse Agent
-├── proveedor/           # Supplier Management Agent
-├── fabricante/          # Manufacturer Management Agent
-├── familia/             # Product Family / Category Agent
-└── reduced_loop/        # Optimized Inference Loop
+python api.py
 
-Tech Stack and Key Concepts
+Author
 
-    Language: Python 3.10+
-
-    Design Patterns: Multi-Agent System (MAS), Function Calling / Tool Use, Modular Prompt Engineering.
-
-    API Integration: Endpoints for asynchronous communication and external orchestration.
+Saúl Conejo Mínguez - Software Engineer
